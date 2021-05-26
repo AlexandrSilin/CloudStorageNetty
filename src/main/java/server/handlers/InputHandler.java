@@ -5,6 +5,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.stream.ChunkedNioFile;
+import server.Connect;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,6 +14,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.*;
 import java.util.Objects;
 
 public class InputHandler extends ChannelInboundHandlerAdapter {
@@ -21,89 +23,109 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
     public static final String CD_COMMAND = "\tcd go to directory\n";
     public static final String RM_COMMAND = "\trm [filename] delete file\n";
     public static final String NICKNAME_COMMAND = "\tnickname show your nickname\n";
-    public static final String CHANGE_NICKNAME_COMMAND = "\tchangen [nick] show your nickname\n";
     public static final String UPLOAD = "\tupload [path] [filename] upload your file in current directory on server\n";
 
+    private Connection connection = null;
     private Path path = Path.of("root");
     private String nick;
+    private boolean isAuth = false;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         System.out.println("Client connected " + ctx.channel());
-        nick = ctx.channel().localAddress().toString();
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws SQLException {
         ByteBuf buf = (ByteBuf) msg;
         StringBuilder builder = new StringBuilder();
         while (buf.isReadable()) {
             builder.append((char) buf.readByte());
         }
         String[] command = builder.toString().trim().split(" ", 2);
-        switch (command[0]) {
-            case "--help":
-                ctx.channel().writeAndFlush("Message: \n" + LS_COMMAND + MKDIR_COMMAND + CD_COMMAND + RM_COMMAND +
-                        UPLOAD + NICKNAME_COMMAND + CHANGE_NICKNAME_COMMAND);
-                break;
-            case "upload":
-                if (command.length < 2) {
-                    ctx.channel().writeAndFlush("Message: Bad command");
-                } else {
-                    uploading(ctx, command[1]);
-                }
-                break;
-            case "ls":
-                ctx.channel().writeAndFlush("Message: " + String.join(" ",
-                        Objects.requireNonNull(new File(String.valueOf(path)).list())));
-                break;
-            case "cd":
-                if (command.length > 1) {
-                    goToDirectory(command[1], ctx);
-                } else {
-                    path = Path.of("root");
-                }
-                break;
-            case "mkdir":
-                if (command.length < 2) {
-                    ctx.channel().writeAndFlush("Message: Bad command");
+        if (command[0].equals("auth")) {
+            auth(ctx, command[1].split(" "));
+        }
+        if (isAuth) {
+            switch (command[0]) {
+                case "--help":
+                    ctx.channel().writeAndFlush("Message: \n" + LS_COMMAND + MKDIR_COMMAND + CD_COMMAND + RM_COMMAND +
+                            UPLOAD + NICKNAME_COMMAND);
                     break;
-                }
-                createDirectory(command[1], ctx);
-                break;
-            case "rm":
-                if (command.length < 2) {
-                    ctx.channel().writeAndFlush("Message: Bad command");
+                case "upload":
+                    if (command.length < 2) {
+                        ctx.channel().writeAndFlush("Message: Bad command");
+                    } else {
+                        uploading(ctx, command[1]);
+                    }
                     break;
-                }
-                removeFile(command[1], ctx);
-                break;
-            case "nickname":
-                ctx.channel().writeAndFlush("Message: Your nickname is " + nick);
-                break;
-            case "changen":
-                if (command.length < 2) {
-                    ctx.channel().writeAndFlush("Message: Bad command");
+                case "ls":
+                    ctx.channel().writeAndFlush("Message: " + String.join(" ",
+                            Objects.requireNonNull(new File(String.valueOf(path)).list())));
                     break;
-                }
-                nick = command[1];
-                ctx.channel().writeAndFlush("Message: Now your nickname is " + nick);
-                break;
-            case "exit":
-                ctx.channel().writeAndFlush("Message: Client logged out IP: " +
-                        ctx.channel().localAddress().toString());
-                ctx.channel().close();
-            default:
-                ctx.channel().writeAndFlush("Message: No such command");
+                case "cd":
+                    if (command.length > 1) {
+                        goToDirectory(command[1], ctx);
+                    } else {
+                        path = Path.of("root");
+                    }
+                    break;
+                case "mkdir":
+                    if (command.length < 2) {
+                        ctx.channel().writeAndFlush("Message: Bad command");
+                        break;
+                    }
+                    createDirectory(command[1], ctx);
+                    break;
+                case "rm":
+                    if (command.length < 2) {
+                        ctx.channel().writeAndFlush("Message: Bad command");
+                        break;
+                    }
+                    removeFile(command[1], ctx);
+                    break;
+                case "nickname":
+                    ctx.channel().writeAndFlush("Message: Your nickname is " + nick);
+                    break;
+                case "exit":
+                    ctx.channel().writeAndFlush("Message: Client logged out IP: " +
+                            ctx.channel().localAddress().toString());
+                    connection.close();
+                    ctx.channel().close();
+                default:
+                    ctx.channel().writeAndFlush("Message: No such command");
+            }
+        } else {
+            ctx.channel().writeAndFlush("Message: please type auth [login] [password] for login");
         }
         ctx.fireChannelRead(builder.toString());
+    }
+
+    private void auth(ChannelHandlerContext ctx, String[] data) {
+        if (data.length > 2) {
+            ctx.channel().writeAndFlush("Message: Bad command");
+        } else {
+            try {
+                connection = Connect.getConnection();
+                Statement statement = connection.createStatement();
+                ResultSet set = statement.executeQuery("select * from cloud.users where login='" + data[0] +
+                        "' and password='" + data[1] + "'");
+                if (set.next()) {
+                    nick = data[0];
+                    isAuth = true;
+                    ctx.channel().writeAndFlush("Message: Auth complete. Your nickname is " + nick);
+                }
+            } catch (SQLException | ClassNotFoundException e) {
+                ctx.channel().writeAndFlush("Message: " + e.getMessage());
+            }
+        }
     }
 
     private void uploading(ChannelHandlerContext ctx, String srcPath) {
         try {
             FileChannel file = new RandomAccessFile(new File(srcPath), "r").getChannel();
 
-        } catch (FileNotFoundException e){
+        } catch (FileNotFoundException e) {
             ctx.channel().writeAndFlush("Message: File not found");
         }
         /*try {

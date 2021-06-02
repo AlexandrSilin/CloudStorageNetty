@@ -8,7 +8,7 @@ import java.time.ZoneOffset;
 
 public class FileInfo {
     public enum FileType {
-        FILE("F"), DIRECTORY("D");
+        FILE("File"), DIRECTORY("Directory");
 
         private String name;
 

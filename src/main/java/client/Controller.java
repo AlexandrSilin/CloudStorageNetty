@@ -3,29 +3,21 @@ package client;
 import client.explorer.Explorer;
 import client.handlers.ClientHandler;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-
-import java.io.*;
-import java.net.MalformedURLException;
-import java.net.Socket;
-import java.util.Base64;
-
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+
+import java.io.File;
+import java.io.IOException;
 
 public class Controller {
     Stage connectWindow;
@@ -68,26 +60,20 @@ public class Controller {
     }
 
     public void submitAuth(ActionEvent actionEvent) throws IOException {
-        authWindow.close();
-        Label label;
+        Alert answer = new Alert(Alert.AlertType.INFORMATION, "Success", ButtonType.OK);
         if (login.getText().trim().length() == 0) {
-            label = new Label("The field 'Login' must be filled");
+            answer.setContentText("The field 'Login' must be filled");
         } else if (password.getText().trim().length() == 0) {
-            label = new Label("The field 'Password' must be filled");
+            answer.setContentText("The field 'Password' must be filled");
         } else {
-            label = new Label("The field 'Password' must be filled");
             authButton.setDisable(true);
         }
-        Stage answer = new Stage();
-        answer.setTitle("Result");
-        answer.setScene(new Scene(label, 100, 50));
-        answer.show();
+        answer.showAndWait();
     }
 
     public void submitConnect(ActionEvent actionEvent) {
         serverAddress = ip.getText();
-        Stage answer = new Stage();
-        answer.setTitle("Result");
+        Alert answer = new Alert(Alert.AlertType.WARNING, "Success", ButtonType.OK);
         try {
             serverPort = Integer.parseInt(port.getText());
             EventLoopGroup client = new NioEventLoopGroup(1);
@@ -98,14 +84,12 @@ public class Controller {
                     .connect(serverAddress, serverPort)
                     .sync()
                     .channel();
-            answer.setScene(new Scene(new Label("Success"), 100, 50));
         } catch (NumberFormatException e) {
-            answer.setScene(new Scene(new Label("Bad port"), 100, 50));
+            answer.setContentText("Bad port");
         } catch (Exception e) {
-            answer.setScene(new Scene(new Label(e.getMessage()), 250, 50));
-        }
-        finally {
-            answer.show();
+            answer.setContentText(e.getMessage());
+        } finally {
+            answer.showAndWait();
         }
     }
 

@@ -5,20 +5,24 @@
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.VBox?>
-<VBox prefHeight="100.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.Controller">
+<VBox prefHeight="100.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/10.0.2-internal"
+      xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.Controller">
     <TextField fx:id="login" promptText="Login">
-      <VBox.margin>
-         <Insets left="5.0" right="5.0" top="10.0" />
-      </VBox.margin></TextField>
+        <VBox.margin>
+            <Insets left="5.0" right="5.0" top="10.0"/>
+        </VBox.margin>
+    </TextField>
     <PasswordField fx:id="password" promptText="Password">
-      <opaqueInsets>
-         <Insets />
-      </opaqueInsets>
-      <VBox.margin>
-         <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-      </VBox.margin></PasswordField>
+        <opaqueInsets>
+            <Insets/>
+        </opaqueInsets>
+        <VBox.margin>
+            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0"/>
+        </VBox.margin>
+    </PasswordField>
     <Button text="Submit" fx:id="authButton" onAction="#submitAuth">
-      <VBox.margin>
-         <Insets bottom="5.0" left="5.0" />
-      </VBox.margin></Button>
+        <VBox.margin>
+            <Insets bottom="5.0" left="5.0"/>
+        </VBox.margin>
+    </Button>
 </VBox>

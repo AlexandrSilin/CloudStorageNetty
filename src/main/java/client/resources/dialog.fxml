@@ -6,5 +6,5 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="client.Controller"
             prefHeight="100" prefWidth="50">
-<Label alignment="CENTER"/>
+    <Label alignment="CENTER"/>
 </AnchorPane>

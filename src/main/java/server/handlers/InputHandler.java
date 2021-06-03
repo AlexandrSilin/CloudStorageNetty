@@ -3,12 +3,10 @@ package server.handlers;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.stream.ChunkedNioFile;
 import server.Connect;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,7 +27,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
     private Connection connection = null;
     private Path path = Path.of("root");
     private String nick;
-    private boolean isAuth = false;
+    private boolean isAuth = true;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
@@ -57,7 +55,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                     if (command.length < 2) {
                         ctx.channel().writeAndFlush("Message: Bad command");
                     } else {
-                        uploading(ctx, command[1]);
+                        uploading(ctx, buf, command[1]);
                     }
                     break;
                 case "ls":
@@ -91,15 +89,15 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                 case "exit":
                     ctx.channel().writeAndFlush("Message: Client logged out IP: " +
                             ctx.channel().localAddress().toString());
-                    connection.close();
                     ctx.channel().close();
-                default:
-                    ctx.channel().writeAndFlush("Message: No such command");
+                    if (connection != null) {
+                        connection.close();
+                    }
+                    break;
             }
         } else {
             ctx.channel().writeAndFlush("Message: please type auth [login] [password] for login");
         }
-        ctx.fireChannelRead(builder.toString());
     }
 
     private void auth(ChannelHandlerContext ctx, String[] data) {
@@ -122,13 +120,29 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    private void uploading(ChannelHandlerContext ctx, String srcPath) {
-        try {
-            FileChannel file = new RandomAccessFile(new File(srcPath), "r").getChannel();
+    private void uploading(ChannelHandlerContext ctx, ByteBuf buf, String srcPath) {
+//        try {
 
+        try {
+            File src = new File(srcPath);
+            FileChannel file = new RandomAccessFile(src, "r").getChannel();
+            buf.clear();
+            buf.writeBytes((path + "\\" + src.getName() + "%").getBytes());
+            ctx.channel().write(buf);
+            ctx.channel().write(new ChunkedNioFile(file));
+            file.close();
+            ctx.channel().flush();
         } catch (FileNotFoundException e) {
-            ctx.channel().writeAndFlush("Message: File not found");
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+//            ctx.fireChannelRead(path);
+//            ctx.channel().writeAndFlush("Path: " + path);
+//            ctx.channel().writeAndFlush(file);
+//        } catch (FileNotFoundException e) {
+//            ctx.channel().writeAndFlush("Message: File not found");
+//        }
         /*try {
             FileChannel srcFile = new RandomAccessFile(new File(path), "r").getChannel();
             File dstFile = new File(path + filename);

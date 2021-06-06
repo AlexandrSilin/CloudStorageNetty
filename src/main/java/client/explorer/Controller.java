@@ -1,13 +1,18 @@
 package client.explorer;
 
+import io.netty.buffer.Unpooled;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,6 +22,8 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class Controller implements Initializable {
+    private static Path downloadPath = null;
+
     @FXML
     TableView<FileInfo> table;
 
@@ -75,5 +82,70 @@ public class Controller implements Initializable {
 
     public void selectDisk(ActionEvent actionEvent) {
         updateList(Paths.get(disks.getValue()));
+    }
+
+    public void upload(ActionEvent actionEvent) {
+        ((Stage) (((Button) actionEvent.getSource()).getScene().getWindow())).close();
+        try {
+            Path path = Path.of(pathField.getText()).resolve(table.getSelectionModel().getSelectedItem().getFilename());
+            if (!Files.isDirectory(path)) {
+                File file = new File(String.valueOf(path));
+                RandomAccessFile src = new RandomAccessFile(file, "rw");
+                int offset = 0;
+                int part = 512;
+                int toSend = 0;
+                int i;
+                String command = "File:upload " + file.getName() + "%";
+                byte[] send = new byte[part + command.length()];
+                byte[] bufCommand = new byte[command.length()];
+                for (int j = 0; j < command.length(); j++) {
+                    bufCommand[j] = (byte) command.charAt(j);
+                }
+                while (offset != src.length()) {
+                    if (src.length() < part) {
+                        send = new byte[(int) src.length()];
+                        while ((i = src.read()) != -1) {
+                            send[offset] = (byte) i;
+                            offset++;
+                        }
+                        byte[] full = new byte[send.length + bufCommand.length];
+                        System.arraycopy(("File:upload " + file.getName() + "%")
+                                .getBytes(StandardCharsets.UTF_8), 0, full, 0, bufCommand.length);
+                        System.arraycopy(send, bufCommand.length, full, bufCommand.length, send.length);
+                        client.Controller.getChannel().writeAndFlush(full);
+                    } else {
+                        while (offset != src.length()) {
+                            send[toSend] = (byte) src.read();
+                            offset++;
+                            toSend++;
+                            if (toSend == part) {
+                                toSend = 0;
+                                byte[] full = new byte[send.length + bufCommand.length];
+                                System.arraycopy(("File:upload " + file.getName() + "%")
+                                        .getBytes(StandardCharsets.UTF_8), 0, full, 0, bufCommand.length);
+                                System.arraycopy(send, 0, full, bufCommand.length, send.length);
+                                send = new byte[part + bufCommand.length];
+                                client.Controller.getChannel().writeAndFlush(Unpooled.wrappedBuffer(full));
+                            }
+                        }
+                    }
+                }
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR, "It's a directory!", ButtonType.OK);
+                alert.showAndWait();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void download(ActionEvent actionEvent) {
+        Path path = Path.of(pathField.getText()).resolve(table.getSelectionModel().getSelectedItem().getFilename());
+        if (Files.isDirectory(path)) {
+            downloadPath = path;
+        } else {
+            Alert alert = new Alert(Alert.AlertType.ERROR, "It's a file!", ButtonType.OK);
+            alert.showAndWait();
+        }
     }
 }

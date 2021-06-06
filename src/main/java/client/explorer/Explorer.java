@@ -1,5 +1,6 @@
 package client.explorer;
 
+import io.netty.channel.Channel;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -9,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class Explorer {
+
     public Explorer() throws IOException {
         Stage exp = new Stage();
         Parent root = FXMLLoader.load(

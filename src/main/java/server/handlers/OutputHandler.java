@@ -4,9 +4,15 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
+import io.netty.handler.stream.ChunkedFile;
+import io.netty.handler.stream.ChunkedNioFile;
+import io.netty.handler.stream.ChunkedWriteHandler;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -18,40 +24,16 @@ public class OutputHandler extends ChannelOutboundHandlerAdapter {
         StringBuilder out = new StringBuilder();
         while (buf.isReadable()) {
             char c = (char) buf.readByte();
-            if (c == '%') {
+            if (c == ':') {
                 break;
             }
             out.append(c);
         }
         if (out.toString().startsWith("Message: ")) {
-            ctx.channel().writeAndFlush(out.substring("Message: ".length()));
+            buf.clear().writeBytes(out.append('\n').toString().getBytes(StandardCharsets.UTF_8));
+            ctx.writeAndFlush(buf);
         } else {
-            Path path = Path.of(out.toString());
-            if (!Files.exists(path)){
-                Files.createFile(path);
-            }
-            System.out.println(path);
-            RandomAccessFile file = new RandomAccessFile(String.valueOf(path), "rw");
-            while (buf.isReadable()) {
-                file.write(buf.readByte());
-            }
-            System.out.println(buf);
-            ctx.channel().writeAndFlush("Success");
+            ctx.writeAndFlush(buf);
         }
-//        String[] message = String.valueOf(msg).trim().split(" ", 2);
-//        ByteBuf buf = ctx.alloc().directBuffer();
-//        StringBuilder out = new StringBuilder();
-//        while (buf.isReadable()) {
-//            out.append((char) buf.readByte());
-//        }
-//        System.out.println(out);
-//        if (message[0].equals("Message:")) {
-//            buf.writeBytes((message[1] + "\n").getBytes(StandardCharsets.UTF_8));
-//            ctx.writeAndFlush(buf);
-//        } else {
-//            Path path = Path.of(message[1]);
-//            ctx.flush();
-//        }
     }
-
 }

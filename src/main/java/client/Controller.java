@@ -2,8 +2,13 @@ package client;
 
 import client.explorer.Explorer;
 import client.handlers.ClientHandler;
+import client.handlers.InputHandler;
+import client.handlers.OutputHandler;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -18,8 +23,11 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class Controller {
+    private static Channel channel = null;
+
     Stage connectWindow;
     Stage authWindow;
 
@@ -28,9 +36,6 @@ public class Controller {
 
     @FXML
     PasswordField password;
-
-    @FXML
-    TableView<String> filesTable;
 
     @FXML
     TextField ip;
@@ -71,25 +76,36 @@ public class Controller {
         answer.showAndWait();
     }
 
+    @FXML
     public void submitConnect(ActionEvent actionEvent) {
         serverAddress = ip.getText();
-        Alert answer = new Alert(Alert.AlertType.WARNING, "Success", ButtonType.OK);
+        Alert answer = new Alert(Alert.AlertType.INFORMATION, "Success", ButtonType.OK);
         try {
             serverPort = Integer.parseInt(port.getText());
             EventLoopGroup client = new NioEventLoopGroup(1);
             Bootstrap connect = new Bootstrap();
-            Channel channel = connect.group(client)
+            channel = connect.group(client)
                     .channel(NioSocketChannel.class)
-                    .handler(new ClientHandler())
-                    .connect(serverAddress, serverPort)
+                    .handler(new ChannelInitializer<>() {
+                        @Override
+                        protected void initChannel(Channel channel) {
+                            channel.pipeline().addLast(
+                                new InputHandler(),
+                                new OutputHandler()
+                            );
+                        }
+                    })
+                    .connect(serverAddress, serverPort)//)
                     .sync()
                     .channel();
+
         } catch (NumberFormatException e) {
             answer.setContentText("Bad port");
         } catch (Exception e) {
             answer.setContentText(e.getMessage());
         } finally {
             answer.showAndWait();
+            ((Stage) (((Button) actionEvent.getSource()).getScene().getWindow())).close();
         }
     }
 
@@ -101,7 +117,21 @@ public class Controller {
         connectWindow.show();
     }
 
-    public void upload(ActionEvent actionEvent) throws IOException {
+    public static Channel getChannel() {
+        return channel;
+    }
+
+    public void openExplorer(ActionEvent actionEvent) throws IOException {
         new Explorer();
+    }
+
+    public void help(ActionEvent actionEvent) {
+        ByteBuf buf = Unpooled.wrappedBuffer("Command:--help".getBytes());
+        channel.writeAndFlush(buf);
+    }
+
+    public void refreshList(ActionEvent actionEvent) {
+        ByteBuf buf = Unpooled.wrappedBuffer("Command:ls".getBytes(StandardCharsets.UTF_8));
+        channel.writeAndFlush(buf);
     }
 }

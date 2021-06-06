@@ -2,8 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.*?>
 <VBox alignment="CENTER" prefHeight="700" prefWidth="300" xmlns="http://javafx.com/javafx/10.0.2-internal"
       xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.explorer.Controller">
     <HBox>
@@ -12,9 +11,16 @@
         <Button text=".." onAction="#pathUp"/>
     </HBox>
     <TableView fx:id="table" prefHeight="700" prefWidth="300"/>
-    <Button fx:id="upload" alignment="BASELINE_LEFT" text="Upload">
-        <VBox.margin>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-        </VBox.margin>
-    </Button>
+    <VBox>
+        <Button fx:id="upload" onAction="#upload" alignment="BASELINE_LEFT" text="Upload">
+            <VBox.margin>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+            </VBox.margin>
+        </Button>
+        <Button fx:id="download" onAction="#download" alignment="BASELINE_LEFT" text="Download">
+            <VBox.margin>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+            </VBox.margin>
+        </Button>
+    </VBox>
 </VBox>

@@ -25,12 +25,15 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
     public static final String RM_COMMAND = "\trm [filename] delete file\n";
     public static final String NICKNAME_COMMAND = "\tnickname show your nickname\n";
     public static final String UPLOAD = "\tupload [path] [filename] upload your file in current directory on server\n";
-
-    private Connection connection = null;
     private static Path path = Path.of("root");
+    private Connection connection = null;
     private String nick;
     private ByteBuf buf;
     private boolean isAuth = true;
+
+    public static Path getPath() {
+        return path;
+    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
@@ -81,7 +84,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                         out[i] = (byte) list.charAt(i);
                     }
                     for (int i = 0; i < pref.length; i++) {
-                        pref[i] = (byte)ans.charAt(i);
+                        pref[i] = (byte) ans.charAt(i);
                     }
                     ctx.writeAndFlush(Unpooled.wrappedBuffer(pref, out));
                     break;
@@ -245,9 +248,5 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         }
         ctx.channel().writeAndFlush(buf.clear()
                 .writeBytes("Message: Success".getBytes(StandardCharsets.UTF_8)));
-    }
-
-    public static Path getPath() {
-        return path;
     }
 }

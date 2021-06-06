@@ -3,59 +3,60 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
-<VBox alignment="center" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.Controller">
+<VBox xmlns:fx="http://javafx.com/fxml/1" alignment="center" xmlns="http://javafx.com/javafx/10.0.2-internal"
+      fx:controller="client.Controller">
     <HBox>
         <TextField editable="false" HBox.hgrow="ALWAYS">
             <HBox.margin>
-                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
             </HBox.margin>
         </TextField>
         <Button text="..">
             <HBox.margin>
-                <Insets right="5.0" top="5.0" />
+                <Insets right="5.0" top="5.0"/>
             </HBox.margin>
         </Button>
     </HBox>
-    <TableView fx:id="filesTable" VBox.vgrow="ALWAYS" />
+    <TableView fx:id="filesTable" VBox.vgrow="ALWAYS"/>
     <HBox spacing="5">
         <Button fx:id="connectButton" onAction="#connect" text="Connect">
             <HBox.margin>
-                <Insets bottom="5.0" left="5.0" top="5.0" />
+                <Insets bottom="5.0" left="5.0" top="5.0"/>
             </HBox.margin>
         </Button>
         <Button onAction="#auth" text="Login">
             <HBox.margin>
-                <Insets bottom="5.0" top="5.0" />
+                <Insets bottom="5.0" top="5.0"/>
             </HBox.margin>
         </Button>
         <Button onAction="#openExplorer" text="Open explorer">
             <HBox.margin>
-                <Insets top="5.0" />
+                <Insets top="5.0"/>
             </HBox.margin>
         </Button>
         <Button text="Create folder">
             <HBox.margin>
-                <Insets top="5.0" />
+                <Insets top="5.0"/>
             </HBox.margin>
         </Button>
         <Button text="Delete file">
             <HBox.margin>
-                <Insets top="5.0" />
+                <Insets top="5.0"/>
             </HBox.margin>
         </Button>
         <Button onAction="#help" text="Help">
             <HBox.margin>
-                <Insets bottom="5.0" top="5.0" />
+                <Insets bottom="5.0" top="5.0"/>
             </HBox.margin>
         </Button>
         <Button onAction="#refreshList" text="Refresh">
-         <HBox.margin>
-            <Insets top="5.0" />
-         </HBox.margin></Button>
+            <HBox.margin>
+                <Insets top="5.0"/>
+            </HBox.margin>
+        </Button>
         <Button onAction="#exit" text="Exit">
             <HBox.margin>
-                <Insets right="5.0" top="5.0" />
+                <Insets right="5.0" top="5.0"/>
             </HBox.margin>
         </Button>
     </HBox>

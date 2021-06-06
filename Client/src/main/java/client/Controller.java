@@ -1,7 +1,6 @@
 package client;
 
 import client.explorer.Explorer;
-import client.handlers.ClientHandler;
 import client.handlers.InputHandler;
 import client.handlers.OutputHandler;
 import io.netty.bootstrap.Bootstrap;
@@ -52,6 +51,10 @@ public class Controller {
     private String serverAddress;
     private int serverPort;
 
+    public static Channel getChannel() {
+        return channel;
+    }
+
     public void auth(ActionEvent actionEvent) throws IOException {
         authWindow = new Stage();
         authWindow.setTitle("Authenticate");
@@ -90,8 +93,8 @@ public class Controller {
                         @Override
                         protected void initChannel(Channel channel) {
                             channel.pipeline().addLast(
-                                new InputHandler(),
-                                new OutputHandler()
+                                    new InputHandler(),
+                                    new OutputHandler()
                             );
                         }
                     })
@@ -115,10 +118,6 @@ public class Controller {
         Parent auth = FXMLLoader.load(new File("Client\\src\\main\\java\\client\\resources\\connect.fxml").toURI().toURL());
         connectWindow.setScene(new Scene(auth));
         connectWindow.show();
-    }
-
-    public static Channel getChannel() {
-        return channel;
     }
 
     public void openExplorer(ActionEvent actionEvent) throws IOException {

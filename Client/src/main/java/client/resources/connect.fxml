@@ -4,8 +4,8 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.VBox?>
-<VBox prefHeight="100.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/10.0.2-internal"
-      xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.Controller">
+<VBox xmlns:fx="http://javafx.com/fxml/1" prefHeight="100.0" prefWidth="300.0"
+      xmlns="http://javafx.com/javafx/10.0.2-internal" fx:controller="client.Controller">
     <TextField fx:id="ip" promptText="Ip">
         <VBox.margin>
             <Insets left="5.0" right="5.0" top="10.0"/>

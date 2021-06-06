@@ -4,8 +4,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import javafx.fxml.FXML;
-import javafx.scene.control.TableView;
 
 import java.nio.charset.StandardCharsets;
 
@@ -34,7 +32,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
             StringBuilder filesList = new StringBuilder();
             filesList.append("List:");
             while (buf.isReadable()) {
-                filesList.append((char)buf.readByte());
+                filesList.append((char) buf.readByte());
             }
             ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(filesList.toString().getBytes()));
         }

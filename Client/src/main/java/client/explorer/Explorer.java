@@ -1,6 +1,5 @@
 package client.explorer;
 
-import io.netty.channel.Channel;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;

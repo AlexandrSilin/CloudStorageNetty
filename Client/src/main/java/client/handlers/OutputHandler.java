@@ -10,10 +10,9 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.TableView;
 
 public class OutputHandler extends ChannelOutboundHandlerAdapter {
-    private ByteBuf buf;
-
     @FXML
     TableView<String> filesTable;
+    private ByteBuf buf;
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -51,7 +50,7 @@ public class OutputHandler extends ChannelOutboundHandlerAdapter {
                 StringBuilder filesList = new StringBuilder();
                 filesList.append("List:");
                 while (buf.isReadable()) {
-                    filesList.append((char)buf.readByte());
+                    filesList.append((char) buf.readByte());
                 }
                 String[] files = filesList.toString().split(" ");
                 for (String file : files) {

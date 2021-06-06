@@ -55,7 +55,7 @@ public class Controller {
     public void auth(ActionEvent actionEvent) throws IOException {
         authWindow = new Stage();
         authWindow.setTitle("Authenticate");
-        Parent auth = FXMLLoader.load(new File("src/main/java/client/resources/auth.fxml").toURI().toURL());
+        Parent auth = FXMLLoader.load(new File("Client\\src\\main\\java\\client\\resources\\auth.fxml").toURI().toURL());
         authWindow.setScene(new Scene(auth));
         authWindow.show();
     }
@@ -112,7 +112,7 @@ public class Controller {
     public void connect(ActionEvent actionEvent) throws IOException {
         connectWindow = new Stage();
         connectWindow.setTitle("Connect");
-        Parent auth = FXMLLoader.load(new File("src/main/java/client/resources/connect.fxml").toURI().toURL());
+        Parent auth = FXMLLoader.load(new File("Client\\src\\main\\java\\client\\resources\\connect.fxml").toURI().toURL());
         connectWindow.setScene(new Scene(auth));
         connectWindow.show();
     }

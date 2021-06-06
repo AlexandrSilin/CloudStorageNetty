@@ -6,7 +6,12 @@
 
     <groupId>org.example</groupId>
     <artifactId>CloudStorageNetty</artifactId>
+    <packaging>pom</packaging>
     <version>1.0</version>
+    <modules>
+        <module>Client</module>
+        <module>Server</module>
+    </modules>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
@@ -30,7 +35,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.1.64.Final</version>
+            <version>4.1.65.Final</version>
         </dependency>
     </dependencies>
 </project>

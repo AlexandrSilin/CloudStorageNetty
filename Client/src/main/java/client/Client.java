@@ -12,7 +12,7 @@ public class Client extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(
-                new File("src/main/java/client/resources/mainWindow.fxml").toURI().toURL());
+                new File("Client\\src\\main\\java\\client\\resources\\mainWindow.fxml").toURI().toURL());
         primaryStage.setTitle("Storage");
         primaryStage.setScene(new Scene(root, 800, 600));
         primaryStage.show();

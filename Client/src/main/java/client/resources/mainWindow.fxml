@@ -3,7 +3,7 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox alignment="center" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1"
+<VBox xmlns:fx="http://javafx.com/fxml/1" alignment="center" xmlns="http://javafx.com/javafx/10.0.2-internal"
       fx:controller="client.Controller">
     <HBox>
         <TextField editable="false" HBox.hgrow="ALWAYS">
@@ -19,7 +19,7 @@
     </HBox>
     <TableView fx:id="filesTable" VBox.vgrow="ALWAYS"/>
     <HBox spacing="5">
-        <Button onAction="#connect" fx:id="connectButton" text="Connect">
+        <Button fx:id="connectButton" onAction="#connect" text="Connect">
             <HBox.margin>
                 <Insets bottom="5.0" left="5.0" top="5.0"/>
             </HBox.margin>
@@ -29,12 +29,7 @@
                 <Insets bottom="5.0" top="5.0"/>
             </HBox.margin>
         </Button>
-        <Button text="Download">
-            <HBox.margin>
-                <Insets top="5.0"/>
-            </HBox.margin>
-        </Button>
-        <Button text="Upload" onAction="#upload">
+        <Button onAction="#openExplorer" text="Open explorer">
             <HBox.margin>
                 <Insets top="5.0"/>
             </HBox.margin>
@@ -45,6 +40,16 @@
             </HBox.margin>
         </Button>
         <Button text="Delete file">
+            <HBox.margin>
+                <Insets top="5.0"/>
+            </HBox.margin>
+        </Button>
+        <Button onAction="#help" text="Help">
+            <HBox.margin>
+                <Insets bottom="5.0" top="5.0"/>
+            </HBox.margin>
+        </Button>
+        <Button onAction="#refreshList" text="Refresh">
             <HBox.margin>
                 <Insets top="5.0"/>
             </HBox.margin>

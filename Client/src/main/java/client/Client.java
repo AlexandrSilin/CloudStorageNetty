@@ -9,14 +9,21 @@ import javafx.stage.Stage;
 import java.io.File;
 
 public class Client extends Application {
+    private static Controller controller;
+
     public static void main(String[] args) {
         launch(args);
     }
 
+    public static Controller getController() {
+        return controller;
+    }
+
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Parent root = FXMLLoader.load(
-                new File("Client\\src\\main\\java\\client\\resources\\mainWindow.fxml").toURI().toURL());
+        FXMLLoader loader = new FXMLLoader(new File("Client/src/main/java/client/resources/mainWindow.fxml").toURI().toURL());
+        Parent root = (Parent) loader.load();
+        controller = loader.getController();
         primaryStage.setTitle("Storage");
         primaryStage.setScene(new Scene(root, 800, 600));
         primaryStage.show();

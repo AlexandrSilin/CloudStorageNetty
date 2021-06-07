@@ -1,13 +1,15 @@
 package client.handlers;
 
+import client.Client;
+import client.Controller;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.nio.charset.StandardCharsets;
 
 public class InputHandler extends ChannelInboundHandlerAdapter {
+    private static Controller controller;
     private ByteBuf buf;
 
     @Override
@@ -22,6 +24,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                 break;
             }
         }
+        System.out.println(in.toString());
         if (in.toString().equals("Message:")) {
             while (buf.isReadable()) {
                 in.append((char) buf.readByte());
@@ -30,11 +33,17 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         }
         if (in.toString().equals("List:")) {
             StringBuilder filesList = new StringBuilder();
-            filesList.append("List:");
+            controller = Client.getController();
             while (buf.isReadable()) {
-                filesList.append((char) buf.readByte());
+                char ch = (char) buf.readByte();
+                if (ch == '%') {
+                    String[] file = filesList.toString().split(" ");
+                    controller.addItemsToList(file);
+                    filesList = new StringBuilder();
+                } else {
+                    filesList.append(ch);
+                }
             }
-            ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(filesList.toString().getBytes()));
         }
     }
 }

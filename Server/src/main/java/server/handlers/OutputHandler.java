@@ -15,16 +15,21 @@ public class OutputHandler extends ChannelOutboundHandlerAdapter {
         StringBuilder out = new StringBuilder();
         while (buf.isReadable()) {
             char c = (char) buf.readByte();
+            out.append(c);
             if (c == ':') {
                 break;
             }
-            out.append(c);
         }
         if (out.toString().startsWith("Message: ")) {
             buf.clear().writeBytes(out.append('\n').toString().getBytes(StandardCharsets.UTF_8));
             ctx.writeAndFlush(buf);
-        } else {
-            ctx.writeAndFlush(buf);
+        } else if (out.toString().startsWith("List:")) {
+            out = new StringBuilder();
+            out.append("List:");
+            while (buf.isReadable()) {
+                out.append((char) buf.readByte());
+            }
+            ctx.writeAndFlush(buf.clear().writeBytes(out.toString().getBytes(StandardCharsets.UTF_8)));
         }
     }
 }

@@ -5,6 +5,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import server.Connect;
+import server.FileInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +17,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class InputHandler extends ChannelInboundHandlerAdapter {
     public static final String LS_COMMAND = "\tls view all files and directories\n";
@@ -30,6 +33,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
     private String nick;
     private ByteBuf buf;
     private boolean isAuth = true;
+    private List<FileInfo> fileInfoList = new ArrayList<>();
 
     public static Path getPath() {
         return path;
@@ -74,19 +78,19 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                         downloading(ctx, command[1]);
                     }
                 case "ls":
-                    buf.clear();
-                    String list = String.join(" ",
-                            Objects.requireNonNull(new File(String.valueOf(path)).list()));
-                    String ans = "List:";
-                    byte[] pref = new byte[ans.length()];
-                    byte[] out = new byte[list.length()];
-                    for (int i = 0; i < list.length(); i++) {
-                        out[i] = (byte) list.charAt(i);
+                    try {
+                        fileInfoList = Files.list(path).map(FileInfo::new).collect(Collectors.toList());
+                        System.out.println(fileInfoList.size());
+                        for (FileInfo info : fileInfoList) {
+                            String fileInfo = "List:" + info.getFilename() + " " +
+                                    info.getType() + " " +
+                                    info.getLastModified() + "%";
+                            System.out.println(fileInfo);
+                            ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(fileInfo.getBytes(StandardCharsets.UTF_8)));
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                    for (int i = 0; i < pref.length; i++) {
-                        pref[i] = (byte) ans.charAt(i);
-                    }
-                    ctx.writeAndFlush(Unpooled.wrappedBuffer(pref, out));
                     break;
                 case "cd":
                     if (command.length > 1) {

@@ -12,6 +12,9 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -23,11 +26,11 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Controller {
     private static Channel channel = null;
-
-    Stage connectWindow;
     Stage authWindow;
 
     @FXML
@@ -35,6 +38,14 @@ public class Controller {
 
     @FXML
     PasswordField password;
+
+    @FXML
+    Button authButton;
+
+    Stage connectWindow;
+
+    @FXML
+    TableView<FileOnServer> filesTable;
 
     @FXML
     TextField ip;
@@ -46,28 +57,31 @@ public class Controller {
     Button connectButton;
 
     @FXML
-    Button authButton;
+    TableColumn<FileOnServer, String> fileType;
 
-    private String serverAddress;
-    private int serverPort;
+    @FXML
+    TableColumn<FileOnServer, String> fileName;
+
+    @FXML
+    TableColumn<FileOnServer, String> lastModified;
+
+    private List<FileOnServer> fileOnServerList = new ArrayList<>();
+    private ObservableList<FileOnServer> observableList = FXCollections.observableArrayList();
+    private boolean initTableCols;
 
     public static Channel getChannel() {
         return channel;
     }
 
-    public void auth(ActionEvent actionEvent) throws IOException {
+    public void auth() throws IOException {
         authWindow = new Stage();
         authWindow.setTitle("Authenticate");
-        Parent auth = FXMLLoader.load(new File("Client\\src\\main\\java\\client\\resources\\auth.fxml").toURI().toURL());
+        Parent auth = FXMLLoader.load(new File("Client/src/main/java/client/resources/auth.fxml").toURI().toURL());
         authWindow.setScene(new Scene(auth));
         authWindow.show();
     }
 
-    public void exit(ActionEvent actionEvent) {
-        Platform.exit();
-    }
-
-    public void submitAuth(ActionEvent actionEvent) throws IOException {
+    public void submitAuth(ActionEvent actionEvent) {
         Alert answer = new Alert(Alert.AlertType.INFORMATION, "Success", ButtonType.OK);
         if (login.getText().trim().length() == 0) {
             answer.setContentText("The field 'Login' must be filled");
@@ -79,12 +93,17 @@ public class Controller {
         answer.showAndWait();
     }
 
+    public void exit(ActionEvent actionEvent) {
+        Platform.exit();
+    }
+
     @FXML
     public void submitConnect(ActionEvent actionEvent) {
-        serverAddress = ip.getText();
+        initTableCols = false;
+        String serverAddress = ip.getText();
         Alert answer = new Alert(Alert.AlertType.INFORMATION, "Success", ButtonType.OK);
         try {
-            serverPort = Integer.parseInt(port.getText());
+            int serverPort = Integer.parseInt(port.getText());
             EventLoopGroup client = new NioEventLoopGroup(1);
             Bootstrap connect = new Bootstrap();
             channel = connect.group(client)
@@ -98,10 +117,13 @@ public class Controller {
                             );
                         }
                     })
-                    .connect(serverAddress, serverPort)//)
+                    .connect(serverAddress, serverPort)
                     .sync()
                     .channel();
 
+//            fileType.setCellValueFactory(new PropertyValueFactory<>("fileType"));
+//            fileName.setCellValueFactory(new PropertyValueFactory<>("fileName"));
+//            lastModified.setCellValueFactory(new PropertyValueFactory<>("lastModified"));
         } catch (NumberFormatException e) {
             answer.setContentText("Bad port");
         } catch (Exception e) {
@@ -115,7 +137,8 @@ public class Controller {
     public void connect(ActionEvent actionEvent) throws IOException {
         connectWindow = new Stage();
         connectWindow.setTitle("Connect");
-        Parent auth = FXMLLoader.load(new File("Client\\src\\main\\java\\client\\resources\\connect.fxml").toURI().toURL());
+        FXMLLoader loader = new FXMLLoader(new File("Client/src/main/java/client/resources/connect.fxml").toURI().toURL());
+        Parent auth = loader.load();
         connectWindow.setScene(new Scene(auth));
         connectWindow.show();
     }
@@ -131,6 +154,22 @@ public class Controller {
 
     public void refreshList(ActionEvent actionEvent) {
         ByteBuf buf = Unpooled.wrappedBuffer("Command:ls".getBytes(StandardCharsets.UTF_8));
+        if (!initTableCols) {
+            TableColumn<FileOnServer, String> fileNameColumn = fileName;
+            fileNameColumn.setCellValueFactory(info -> new SimpleStringProperty(info.getValue().getFilename()));
+            TableColumn<FileOnServer, String> fileTypeColumn = fileType;
+            fileTypeColumn.setCellValueFactory(info -> new SimpleStringProperty(info.getValue().getType()));
+            TableColumn<FileOnServer, String> lastModifiedColumn = lastModified;
+            lastModifiedColumn.setCellValueFactory(info -> new SimpleStringProperty(info.getValue().getLastModified()));
+            initTableCols = true;
+        }
+        fileOnServerList.clear();
+        filesTable.getItems().clear();
         channel.writeAndFlush(buf);
+    }
+
+    public void addItemsToList(String[] items) {
+        fileOnServerList.add(new FileOnServer(items[0], items[1], items[2]));
+        filesTable.getItems().addAll(fileOnServerList);
     }
 }

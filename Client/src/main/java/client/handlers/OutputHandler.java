@@ -4,14 +4,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
-import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.TableView;
 
 public class OutputHandler extends ChannelOutboundHandlerAdapter {
-    @FXML
-    TableView<String> filesTable;
     private ByteBuf buf;
 
     @Override
@@ -28,7 +24,6 @@ public class OutputHandler extends ChannelOutboundHandlerAdapter {
         }
         switch (out.toString()) {
             case "Message:":
-                out = new StringBuilder();
                 while (buf.isReadable()) {
                     out.append((char) buf.readByte());
                 }
@@ -46,16 +41,6 @@ public class OutputHandler extends ChannelOutboundHandlerAdapter {
             case "File:":
                 ctx.writeAndFlush(buf);
                 break;
-            case "List:":
-                StringBuilder filesList = new StringBuilder();
-                filesList.append("List:");
-                while (buf.isReadable()) {
-                    filesList.append((char) buf.readByte());
-                }
-                String[] files = filesList.toString().split(" ");
-                for (String file : files) {
-                    filesTable.getItems().add(file);
-                }
         }
     }
 }

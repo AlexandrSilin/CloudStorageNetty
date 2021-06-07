@@ -24,7 +24,6 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                 break;
             }
         }
-        System.out.println(in.toString());
         if (in.toString().equals("Message:")) {
             while (buf.isReadable()) {
                 in.append((char) buf.readByte());

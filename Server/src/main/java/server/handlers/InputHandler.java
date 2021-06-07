@@ -81,13 +81,15 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                     try {
                         fileInfoList = Files.list(path).map(FileInfo::new).collect(Collectors.toList());
                         System.out.println(fileInfoList.size());
+                        StringBuilder fileInfo = new StringBuilder();
+                        fileInfo.append("List:");
                         for (FileInfo info : fileInfoList) {
-                            String fileInfo = "List:" + info.getFilename() + " " +
+                            fileInfo.append(info.getFilename() + " " +
                                     info.getType() + " " +
-                                    info.getLastModified() + "%";
+                                    info.getLastModified() + "%");
                             System.out.println(fileInfo);
-                            ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(fileInfo.getBytes(StandardCharsets.UTF_8)));
                         }
+                        ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(fileInfo.toString().getBytes(StandardCharsets.UTF_8)));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

@@ -164,11 +164,11 @@ public class Controller {
             initTableCols = true;
         }
         fileOnServerList.clear();
-        filesTable.getItems().clear();
         channel.writeAndFlush(buf);
     }
 
     public void addItemsToList(String[] items) {
+        filesTable.getItems().clear();
         fileOnServerList.add(new FileOnServer(items[0], items[1], items[2]));
         filesTable.getItems().addAll(fileOnServerList);
     }

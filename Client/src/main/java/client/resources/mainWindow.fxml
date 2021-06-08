@@ -6,12 +6,12 @@
 <VBox xmlns:fx="http://javafx.com/fxml/1" alignment="center" xmlns="http://javafx.com/javafx/11.0.1"
       fx:controller="client.Controller">
     <HBox>
-        <TextField editable="false" HBox.hgrow="ALWAYS">
+        <TextField fx:id="currentPath" editable="false" HBox.hgrow="ALWAYS">
             <HBox.margin>
                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
             </HBox.margin>
         </TextField>
-        <Button text="..">
+        <Button text=".." onAction="#up">
             <HBox.margin>
                 <Insets right="5.0" top="5.0"/>
             </HBox.margin>
@@ -40,12 +40,12 @@
                 <Insets top="5.0"/>
             </HBox.margin>
         </Button>
-        <Button text="Create folder">
+        <Button onAction="#createFolder" text="Create folder">
             <HBox.margin>
                 <Insets top="5.0"/>
             </HBox.margin>
         </Button>
-        <Button text="Delete file">
+        <Button text="Delete file" onAction="#deleteFile">
             <HBox.margin>
                 <Insets top="5.0"/>
             </HBox.margin>

@@ -28,16 +28,12 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
     public static final String RM_COMMAND = "\trm [filename] delete file\n";
     public static final String NICKNAME_COMMAND = "\tnickname show your nickname\n";
     public static final String UPLOAD = "\tupload [path] [filename] upload your file in current directory on server\n";
-    private static Path path = Path.of("root");
+    private static String nick = "admin";
+    private static Path path = Path.of("root/" + nick);
     private Connection connection = null;
-    private String nick;
     private ByteBuf buf;
     private boolean isAuth = true;
     private List<FileInfo> fileInfoList = new ArrayList<>();
-
-    public static Path getPath() {
-        return path;
-    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
@@ -78,27 +74,13 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                         downloading(ctx, command[1]);
                     }
                 case "ls":
-                    try {
-                        fileInfoList = Files.list(path).map(FileInfo::new).collect(Collectors.toList());
-                        System.out.println(fileInfoList.size());
-                        StringBuilder fileInfo = new StringBuilder();
-                        fileInfo.append("List:");
-                        for (FileInfo info : fileInfoList) {
-                            fileInfo.append(info.getFilename() + " " +
-                                    info.getType() + " " +
-                                    info.getLastModified() + "%");
-                            System.out.println(fileInfo);
-                        }
-                        ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(fileInfo.toString().getBytes(StandardCharsets.UTF_8)));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    showFiles(ctx);
                     break;
                 case "cd":
                     if (command.length > 1) {
                         goToDirectory(command[1], ctx);
                     } else {
-                        path = Path.of("root");
+                        path = Path.of("root/" + nick);
                     }
                     break;
                 case "mkdir":
@@ -122,9 +104,6 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                             .writeBytes(("Message: Your nickname is " + nick).getBytes(StandardCharsets.UTF_8)));
                     break;
                 case "exit":
-                    ctx.channel().writeAndFlush(buf.clear()
-                            .writeBytes(("Message: Client logged out IP: " +
-                                    ctx.channel().localAddress().toString()).getBytes(StandardCharsets.UTF_8)));
                     ctx.channel().close();
                     if (connection != null) {
                         connection.close();
@@ -134,6 +113,26 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         } else {
             ctx.channel().writeAndFlush(buf.clear()
                     .writeBytes("Message: please type auth [login] [password] for login".getBytes(StandardCharsets.UTF_8)));
+        }
+    }
+
+    private void showFiles(ChannelHandlerContext ctx){
+        try {
+            fileInfoList = Files.list(path).map(FileInfo::new).collect(Collectors.toList());
+            if (fileInfoList.size() > 0){
+                StringBuilder fileInfo = new StringBuilder();
+                fileInfo.append("List:");
+                for (FileInfo info : fileInfoList) {
+                    fileInfo.append(info.getFilename() + " " +
+                            info.getType() + " " +
+                            info.getLastModified() + "%");
+                }
+                ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(fileInfo.toString().getBytes(StandardCharsets.UTF_8)));
+            } else {
+                ctx.channel().writeAndFlush(buf.clear().writeBytes("List:!!".getBytes(StandardCharsets.UTF_8)));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -162,6 +161,8 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                     ctx.channel().writeAndFlush(buf.clear()
                             .writeBytes(("Message: Auth complete. Your nickname is " + nick)
                                     .getBytes(StandardCharsets.UTF_8)));
+                    ctx.channel().writeAndFlush(buf.clear()
+                            .writeBytes(("Nick:" + nick).getBytes(StandardCharsets.UTF_8)));
                 }
             } catch (SQLException | ClassNotFoundException e) {
                 ctx.channel().writeAndFlush(buf.clear()
@@ -220,7 +221,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
 
     private void goToDirectory(String dirname, ChannelHandlerContext ctx) {
         if ("..".equals(dirname)) {
-            if (path.equals(Path.of("root"))) {
+            if (path.equals(Path.of("root/" + nick))) {
                 return;
             }
             path = path.getParent();

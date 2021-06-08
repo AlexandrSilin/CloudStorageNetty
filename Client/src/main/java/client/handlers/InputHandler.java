@@ -41,6 +41,9 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                     filesList = new StringBuilder();
                 } else {
                     filesList.append(ch);
+                    if (filesList.toString().equals("!!")) {
+                        controller.addItemsToList(new String[0]);
+                    }
                 }
             }
         }

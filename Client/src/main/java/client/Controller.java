@@ -13,8 +13,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -26,12 +24,20 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Controller {
     private static Channel channel = null;
+
+    Stage connectWindow;
     Stage authWindow;
+    Stage dialog;
+
+    @FXML
+    TextField currentPath;
 
     @FXML
     TextField login;
@@ -42,7 +48,8 @@ public class Controller {
     @FXML
     Button authButton;
 
-    Stage connectWindow;
+    @FXML
+    TextField folderName;
 
     @FXML
     TableView<FileOnServer> filesTable;
@@ -66,7 +73,8 @@ public class Controller {
     TableColumn<FileOnServer, String> lastModified;
 
     private List<FileOnServer> fileOnServerList = new ArrayList<>();
-    private ObservableList<FileOnServer> observableList = FXCollections.observableArrayList();
+    private static String nick = "admin";
+    private static Path path = Path.of("root/" + nick);
     private boolean initTableCols;
 
     public static Channel getChannel() {
@@ -83,17 +91,29 @@ public class Controller {
 
     public void submitAuth(ActionEvent actionEvent) {
         Alert answer = new Alert(Alert.AlertType.INFORMATION, "Success", ButtonType.OK);
-        if (login.getText().trim().length() == 0) {
+        String login = this.login.getText().trim();
+        String password = this.password.getText().trim();
+        if (login.length() == 0) {
             answer.setContentText("The field 'Login' must be filled");
-        } else if (password.getText().trim().length() == 0) {
+        } else if (password.length() == 0) {
             answer.setContentText("The field 'Password' must be filled");
         } else {
+            channel.writeAndFlush(Unpooled.wrappedBuffer(("Command:auth " + login + " " + password)
+                    .getBytes(StandardCharsets.UTF_8)));
             authButton.setDisable(true);
         }
         answer.showAndWait();
     }
 
+    public static void setNick(String nick) {
+        Controller.nick = nick;
+        path = Path.of("root/" + nick);
+    }
+
     public void exit(ActionEvent actionEvent) {
+        if (channel != null) {
+            channel.writeAndFlush(Unpooled.wrappedBuffer("Command:exit".getBytes(StandardCharsets.UTF_8)));
+        }
         Platform.exit();
     }
 
@@ -120,10 +140,6 @@ public class Controller {
                     .connect(serverAddress, serverPort)
                     .sync()
                     .channel();
-
-//            fileType.setCellValueFactory(new PropertyValueFactory<>("fileType"));
-//            fileName.setCellValueFactory(new PropertyValueFactory<>("fileName"));
-//            lastModified.setCellValueFactory(new PropertyValueFactory<>("lastModified"));
         } catch (NumberFormatException e) {
             answer.setContentText("Bad port");
         } catch (Exception e) {
@@ -161,15 +177,82 @@ public class Controller {
             fileTypeColumn.setCellValueFactory(info -> new SimpleStringProperty(info.getValue().getType()));
             TableColumn<FileOnServer, String> lastModifiedColumn = lastModified;
             lastModifiedColumn.setCellValueFactory(info -> new SimpleStringProperty(info.getValue().getLastModified()));
+            filesTable.setOnMouseClicked(mouseEvent -> {
+                if (mouseEvent.getClickCount() == 2) {
+                    Path path = Path.of(currentPath.getText())
+                            .resolve(filesTable.getSelectionModel().getSelectedItem().getFilename());
+                    if (Files.isDirectory(path)) {
+                        Controller.path = path;
+                        try {
+                            goToDirectory(actionEvent, filesTable.getSelectionModel().getSelectedItem().getFilename());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
             initTableCols = true;
         }
+        currentPath.setText(String.valueOf(path));
         fileOnServerList.clear();
         channel.writeAndFlush(buf);
     }
 
     public void addItemsToList(String[] items) {
         filesTable.getItems().clear();
-        fileOnServerList.add(new FileOnServer(items[0], items[1], items[2]));
-        filesTable.getItems().addAll(fileOnServerList);
+        if (items.length > 0) {
+            fileOnServerList.add(new FileOnServer(items[0], items[1], items[2]));
+            filesTable.getItems().addAll(fileOnServerList);
+        }
+    }
+
+    public void up(ActionEvent actionEvent) {
+        if (path.equals(Path.of("root/" + nick))) {
+            return;
+        }
+        path = path.getParent();
+        channel.writeAndFlush(Unpooled.wrappedBuffer("Command:cd ..".getBytes(StandardCharsets.UTF_8)));
+        forceRefreshTable(actionEvent);
+    }
+
+    public void goToDirectory(ActionEvent actionEvent, String catalog) throws InterruptedException {
+        currentPath.setText(String.valueOf(path));
+        channel.writeAndFlush(Unpooled.wrappedBuffer(("Command:cd " + catalog).getBytes(StandardCharsets.UTF_8)));
+        forceRefreshTable(actionEvent);
+    }
+
+    public void createFolder(ActionEvent actionEvent) throws IOException {
+        dialog = new Stage();
+        dialog.setTitle("Create Folder");
+        FXMLLoader loader = new FXMLLoader(new File("Client/src/main/java/client/resources/dialog.fxml").toURI().toURL());
+        Parent auth = loader.load();
+        dialog.setScene(new Scene(auth));
+        dialog.show();
+    }
+
+    public void submitCreateFolder(ActionEvent actionEvent) {
+        String folderName = this.folderName.getText().trim();
+        ((Stage) (((Button) actionEvent.getSource()).getScene().getWindow())).close();
+        channel.writeAndFlush(Unpooled.wrappedBuffer(("Command:mkdir " + folderName).getBytes(StandardCharsets.UTF_8)));
+        forceRefreshTable(actionEvent);
+    }
+
+    public void deleteFile(ActionEvent actionEvent) {
+        String filename = filesTable.getSelectionModel().getSelectedItem().getFilename();
+        if (filename.length() > 0) {
+            channel.writeAndFlush(Unpooled.wrappedBuffer(("Command:rm " + filename).getBytes(StandardCharsets.UTF_8)));
+            forceRefreshTable(actionEvent);
+        }
+    }
+
+    private void forceRefreshTable(ActionEvent actionEvent){
+        synchronized (this){
+            try {
+                this.wait(200);
+                refreshList(actionEvent);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 package client.handlers;
 
+import client.Controller;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
@@ -37,6 +38,14 @@ public class OutputHandler extends ChannelOutboundHandlerAdapter {
             case "File:":
                 ctx.writeAndFlush(buf);
                 break;
+            case "Message":
+                out = new StringBuilder();
+                while (buf.isReadable()) {
+                    out.append((char) buf.readByte());
+                }
+                String[] alert = out.toString().split("%");
+                ctx.flush();
+                Controller.alert(alert[0], alert[1]);
         }
     }
 }

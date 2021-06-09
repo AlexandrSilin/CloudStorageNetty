@@ -3,12 +3,15 @@ package client.handlers;
 import client.Client;
 import client.Controller;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import javafx.event.ActionEvent;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -33,12 +36,10 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         }
         switch (in.toString()) {
             case "Message:":
-                in = new StringBuilder();
                 while (buf.isReadable()) {
-                    in.append((char) buf.readByte());
+                    in.append((char)buf.readByte());
                 }
-                String[] alert = in.toString().split("%");
-                Controller.alert(alert[0], alert[1]);
+                ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(in.toString().getBytes(StandardCharsets.UTF_8)));
                 break;
             case "nick:":
                 in = new StringBuilder();
@@ -78,6 +79,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                     File f = new File(String.valueOf(path));
                     if (!Files.exists(path)) {
                         Files.createFile(path);
+                        Client.getController().forceRefreshTable(new ActionEvent());
                     }
                     RandomAccessFile file = new RandomAccessFile(f, "rw");
                     while (buf.isReadable()) {

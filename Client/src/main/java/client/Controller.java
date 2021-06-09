@@ -258,6 +258,7 @@ public class Controller {
                     }
                 }
             });
+            fileOnServerList.clear();
             initTableCols = true;
         }
         currentPath.setText(String.valueOf(path));
@@ -342,7 +343,7 @@ public class Controller {
      * Обновление файлового менеджера
      * @param actionEvent ActionEvent
      */
-    private void forceRefreshTable(ActionEvent actionEvent) {
+    public void forceRefreshTable(ActionEvent actionEvent) {
         synchronized (this) {
             try {
                 this.wait(200);

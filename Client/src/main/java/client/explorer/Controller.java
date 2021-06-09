@@ -111,7 +111,7 @@ public class Controller implements Initializable {
                 File file = new File(String.valueOf(path));
                 RandomAccessFile src = new RandomAccessFile(file, "r");
                 String command = "File:upload " + file.getName() + "%";
-                if (file.length() > Integer.MAX_VALUE) {
+                if (file.length() < Integer.MAX_VALUE) {
                     byte[] fileBytes = new byte[(int) file.length()];
                     src.readFully(fileBytes);
                     byte[] bufCommand = new byte[command.length()];
@@ -135,8 +135,10 @@ public class Controller implements Initializable {
 
     /**
      * Получение файла с сервера
+     * @param actionEvent ActionEvent
      */
-    public void download() {
+    public void download(ActionEvent actionEvent) {
+        ((Stage) (((Button) actionEvent.getSource()).getScene().getWindow())).close();
         Path path = client.Controller.getDownloadFile();
         if (!Files.isDirectory(path)) {
             Client.getController().setDownloadPath(pathField.getText());

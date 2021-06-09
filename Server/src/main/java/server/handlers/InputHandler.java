@@ -82,6 +82,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                     } else {
                         downloading(ctx, command[1]);
                     }
+                    break;
                 case "ls":
                     showFiles(ctx);
                     break;
@@ -155,7 +156,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
             Path path = Path.of(s);
             File file = new File(String.valueOf(path));
             RandomAccessFile src = new RandomAccessFile(file, "r");
-            String command = "File:" + file.getName() + "%"; //? %
+            String command = "File:" + file.getName() + "%";
             if (file.length() < Integer.MAX_VALUE) {
                 byte[] fileBytes = new byte[(int) file.length()];
                 src.readFully(fileBytes);

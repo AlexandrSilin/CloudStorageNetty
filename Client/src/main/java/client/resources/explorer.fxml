@@ -12,7 +12,7 @@
     </HBox>
     <TableView fx:id="table" prefHeight="700" prefWidth="300"/>
     <VBox>
-        <Button fx:id="upload" onAction="#upload" alignment="BASELINE_LEFT" text="Upload">
+        <Button onAction="#upload" alignment="BASELINE_LEFT" text="Upload">
             <VBox.margin>
                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
             </VBox.margin>

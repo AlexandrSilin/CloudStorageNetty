@@ -12,6 +12,10 @@ public class FileInfo {
     private long size;
     private LocalDateTime lastModified;
 
+    /**
+     * Сбор данных о файле
+     * @param path Path to file
+     */
     public FileInfo(Path path) {
         try {
             this.filename = path.getFileName().toString();

@@ -10,6 +10,10 @@ import java.io.IOException;
 
 public class Explorer {
 
+    /**
+     * Отрисовка окна Explorer
+     * @throws IOException
+     */
     public Explorer() throws IOException {
         Stage exp = new Stage();
         Parent root = FXMLLoader.load(

@@ -9,8 +9,14 @@ import java.nio.charset.StandardCharsets;
 
 
 public class OutputHandler extends ChannelOutboundHandlerAdapter {
+    /**
+     * Обработчик исходящих сообщений
+     * @param ctx ChannelHandlerContext
+     * @param msg Object
+     * @param promise ChannelPromise
+     */
     @Override
-    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
         ByteBuf buf = (ByteBuf) msg;
         StringBuilder out = new StringBuilder();
         while (buf.isReadable()) {

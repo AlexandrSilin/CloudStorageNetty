@@ -19,10 +19,15 @@ public class Client extends Application {
         return controller;
     }
 
+    /**
+     * Отрисовка главного окна
+     * @param primaryStage Stage
+     * @throws Exception
+     */
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(new File("Client/src/main/java/client/resources/mainWindow.fxml").toURI().toURL());
-        Parent root = (Parent) loader.load();
+        Parent root = loader.load();
         controller = loader.getController();
         primaryStage.setTitle("Storage");
         primaryStage.setScene(new Scene(root, 800, 600));

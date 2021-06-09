@@ -35,34 +35,29 @@ public class Controller {
     private static Path path = Path.of("root/" + nick);
     private static Path downloadPath;
     private static Path downloadFile;
-    Stage connectWindow;
-    Stage authWindow;
-    Stage dialog;
+
     @FXML
-    TextField currentPath;
+    private TextField currentPath;
     @FXML
-    TextField login;
+    private TextField login;
     @FXML
-    PasswordField password;
+    private PasswordField password;
     @FXML
-    Button authButton;
+    private TextField folderName;
     @FXML
-    TextField folderName;
+    private TableView<FileOnServer> filesTable;
     @FXML
-    TableView<FileOnServer> filesTable;
+    private TextField ip;
     @FXML
-    TextField ip;
+    private TextField port;
     @FXML
-    TextField port;
+    private TableColumn<FileOnServer, String> fileType;
     @FXML
-    Button connectButton;
+    private TableColumn<FileOnServer, String> fileName;
     @FXML
-    TableColumn<FileOnServer, String> fileType;
-    @FXML
-    TableColumn<FileOnServer, String> fileName;
-    @FXML
-    TableColumn<FileOnServer, String> lastModified;
-    private List<FileOnServer> fileOnServerList = new ArrayList<>();
+    private TableColumn<FileOnServer, String> lastModified;
+
+    private final List<FileOnServer> fileOnServerList = new ArrayList<>();
     private boolean initTableCols;
 
     public static Channel getChannel() {
@@ -74,6 +69,11 @@ public class Controller {
         path = Path.of("root/" + nick);
     }
 
+    /**
+     * Вывод сообщения
+     * @param message String message
+     * @param type String type of alert
+     */
     public static void alert(String message, String type) {
         Alert alert;
         switch (type) {
@@ -102,14 +102,22 @@ public class Controller {
         downloadPath = Path.of(path);
     }
 
+    /**
+     * Отрисовка окна авторизации
+     * @throws IOException
+     */
     public void auth() throws IOException {
-        authWindow = new Stage();
+        Stage authWindow = new Stage();
         authWindow.setTitle("Authenticate");
         Parent auth = FXMLLoader.load(new File("Client/src/main/java/client/resources/auth.fxml").toURI().toURL());
         authWindow.setScene(new Scene(auth));
         authWindow.show();
     }
 
+    /**
+     * Авторизация на сервере
+     * @param actionEvent ActionEvent
+     */
     public void submitAuth(ActionEvent actionEvent) {
         Alert answer = new Alert(Alert.AlertType.INFORMATION, "Success", ButtonType.OK);
         String login = this.login.getText().trim();
@@ -124,17 +132,23 @@ public class Controller {
         } else {
             channel.writeAndFlush(Unpooled.wrappedBuffer(("Command:auth " + login + " " + password)
                     .getBytes(StandardCharsets.UTF_8)));
-            authButton.setDisable(true);
         }
     }
 
-    public void exit(ActionEvent actionEvent) {
+    /**
+     * Завершение работы
+     */
+    public void exit() {
         if (channel != null) {
             channel.writeAndFlush(Unpooled.wrappedBuffer("Command:exit".getBytes(StandardCharsets.UTF_8)));
         }
         Platform.exit();
     }
 
+    /**
+     * Подключение к серверу
+     * @param actionEvent ActionEvent
+     */
     @FXML
     public void submitConnect(ActionEvent actionEvent) {
         initTableCols = false;
@@ -168,8 +182,12 @@ public class Controller {
         }
     }
 
-    public void connect(ActionEvent actionEvent) throws IOException {
-        connectWindow = new Stage();
+    /**
+     * Отрисовка формы для подключения
+     * @throws IOException
+     */
+    public void connect() throws IOException {
+        Stage connectWindow = new Stage();
         connectWindow.setTitle("Connect");
         FXMLLoader loader = new FXMLLoader(new File("Client/src/main/java/client/resources/connect.fxml").toURI().toURL());
         Parent auth = loader.load();
@@ -177,11 +195,19 @@ public class Controller {
         connectWindow.show();
     }
 
-    public void upload(ActionEvent actionEvent) throws IOException {
+    /**
+     * Отрисовка формы для работы с файловым менеджером
+     * @throws IOException
+     */
+    public void upload() throws IOException {
         new Explorer();
     }
 
-    public void download(ActionEvent actionEvent) throws IOException {
+    /**
+     * Загрузка файлов с сервера
+     * @throws IOException
+     */
+    public void download() throws IOException {
         if (filesTable.getSelectionModel().getSelectedItem() != null) {
             String filename = filesTable.getSelectionModel().getSelectedItem().getFilename();
             downloadPath = Path.of(currentPath.getText());
@@ -200,11 +226,15 @@ public class Controller {
         }
     }
 
-    public void help(ActionEvent actionEvent) {
+    public void help() {
         ByteBuf buf = Unpooled.wrappedBuffer("Command:--help".getBytes());
         channel.writeAndFlush(buf);
     }
 
+    /**
+     * Обновление файлов в таблице содержащей список файлов хранящихся на сервере
+     * @param actionEvent ActionEvent
+     */
     public void refreshList(ActionEvent actionEvent) {
         ByteBuf buf = Unpooled.wrappedBuffer("Command:ls".getBytes(StandardCharsets.UTF_8));
         if (!initTableCols) {
@@ -235,6 +265,10 @@ public class Controller {
         channel.writeAndFlush(buf);
     }
 
+    /**
+     * Пополнение таблицы для отображения файлов
+     * @param items String[] item
+     */
     public void addItemsToList(String[] items) {
         filesTable.getItems().clear();
         if (items.length > 0) {
@@ -243,6 +277,10 @@ public class Controller {
         }
     }
 
+    /**
+     * Переход на уровень выше в файловом менеджере сервера
+     * @param actionEvent ActionEvent
+     */
     public void up(ActionEvent actionEvent) {
         if (path.equals(Path.of("root/" + nick))) {
             return;
@@ -252,14 +290,24 @@ public class Controller {
         forceRefreshTable(actionEvent);
     }
 
+    /**
+     * Переход в папку в файловом менеджере сервера
+     * @param actionEvent ActionEvent
+     * @param catalog String to catalog
+     * @throws InterruptedException
+     */
     public void goToDirectory(ActionEvent actionEvent, String catalog) throws InterruptedException {
         currentPath.setText(String.valueOf(path));
         channel.writeAndFlush(Unpooled.wrappedBuffer(("Command:cd " + catalog).getBytes(StandardCharsets.UTF_8)));
         forceRefreshTable(actionEvent);
     }
 
-    public void createFolder(ActionEvent actionEvent) throws IOException {
-        dialog = new Stage();
+    /**
+     * Отрисовка окна для создания папки на стороне сервера
+     * @throws IOException
+     */
+    public void createFolder() throws IOException {
+        Stage dialog = new Stage();
         dialog.setTitle("Create Folder");
         FXMLLoader loader = new FXMLLoader(new File("Client/src/main/java/client/resources/dialog.fxml").toURI().toURL());
         Parent auth = loader.load();
@@ -267,6 +315,10 @@ public class Controller {
         dialog.show();
     }
 
+    /**
+     * Создание папки на стороне сервера
+     * @param actionEvent ActionEvent
+     */
     public void submitCreateFolder(ActionEvent actionEvent) {
         String folderName = this.folderName.getText().trim();
         ((Stage) (((Button) actionEvent.getSource()).getScene().getWindow())).close();
@@ -274,6 +326,10 @@ public class Controller {
         forceRefreshTable(actionEvent);
     }
 
+    /**
+     * Удаление файла на сервере
+     * @param actionEvent ActionEvent
+     */
     public void deleteFile(ActionEvent actionEvent) {
         String filename = filesTable.getSelectionModel().getSelectedItem().getFilename();
         if (filename.length() > 0) {
@@ -282,10 +338,10 @@ public class Controller {
         }
     }
 
-    public String getCurrentPath() {
-        return currentPath.getText();
-    }
-
+    /**
+     * Обновление файлового менеджера
+     * @param actionEvent ActionEvent
+     */
     private void forceRefreshTable(ActionEvent actionEvent) {
         synchronized (this) {
             try {

@@ -25,7 +25,7 @@
         </columns>
     </TableView>
     <HBox spacing="5">
-        <Button fx:id="connectButton" onAction="#connect" text="Connect">
+        <Button onAction="#connect" text="Connect">
             <HBox.margin>
                 <Insets bottom="5.0" left="5.0" top="5.0"/>
             </HBox.margin>

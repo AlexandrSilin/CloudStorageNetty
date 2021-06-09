@@ -11,6 +11,10 @@ public class FileInfo {
     private final FileType type;
     private final LocalDateTime lastModified;
 
+    /**
+     * Сбор данных о файле
+     * @param path Path to file
+     */
     public FileInfo(Path path) {
         try {
             this.filename = path.getFileName().toString();
@@ -34,6 +38,9 @@ public class FileInfo {
         return lastModified;
     }
 
+    /**
+     * Используется для инициализации типа файла (файл или директория)
+     */
     public enum FileType {
         FILE("File"), DIRECTORY("Directory");
 

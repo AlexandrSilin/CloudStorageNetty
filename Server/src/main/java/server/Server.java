@@ -11,6 +11,10 @@ import server.handlers.InputHandler;
 import server.handlers.OutputHandler;
 
 public class Server {
+    /**
+     * Запуск сервера на порту port
+     * @param port int port to listen
+     */
     Server(int port) {
         EventLoopGroup auth = new NioEventLoopGroup(1);
         EventLoopGroup worker = new NioEventLoopGroup();
@@ -20,7 +24,7 @@ public class Server {
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<>() {
                         @Override
-                        protected void initChannel(Channel channel) throws Exception {
+                        protected void initChannel(Channel channel) {
                             channel.pipeline().addLast(
                                     new InputHandler(),
                                     new OutputHandler()

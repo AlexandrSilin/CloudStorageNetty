@@ -13,12 +13,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class InputHandler extends ChannelInboundHandlerAdapter {
-    private static Controller controller;
-    private ByteBuf buf;
 
+    /**
+     * Обработчик входящих сообщений
+     * @param ctx ChannelHandlerContext
+     * @param msg Object received message
+     */
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        buf = (ByteBuf) msg;
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        ByteBuf buf = (ByteBuf) msg;
         StringBuilder in = new StringBuilder();
         char c;
         while (buf.isReadable()) {
@@ -46,7 +49,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                 break;
             case "List:":
                 StringBuilder filesList = new StringBuilder();
-                controller = Client.getController();
+                Controller controller = Client.getController();
                 while (buf.isReadable()) {
                     char ch = (char) buf.readByte();
                     if (ch == '%') {

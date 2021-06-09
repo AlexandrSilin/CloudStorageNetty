@@ -20,7 +20,7 @@
             <Insets bottom="10.0" left="5.0" right="5.0" top="10.0"/>
         </VBox.margin>
     </PasswordField>
-    <Button text="Submit" fx:id="authButton" onAction="#submitAuth">
+    <Button text="Submit" onAction="#submitAuth">
         <VBox.margin>
             <Insets bottom="5.0" left="5.0"/>
         </VBox.margin>

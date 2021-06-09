@@ -24,17 +24,19 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class Controller implements Initializable {
-    private static Path downloadFile = null;
 
     @FXML
-    TableView<FileInfo> table;
-
+    private TableView<FileInfo> table;
     @FXML
-    ComboBox<String> disks;
-
+    private ComboBox<String> disks;
     @FXML
-    TextField pathField;
+    private TextField pathField;
 
+    /**
+     * Инициализация таблицы
+     * @param url URL
+     * @param resourceBundle ResourceBundle
+     */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>("Type");
@@ -62,6 +64,10 @@ public class Controller implements Initializable {
         updateList(Paths.get(disks.getValue()));
     }
 
+    /**
+     * Обновление таблицы
+     * @param path Path to file
+     */
     public void updateList(Path path) {
         try {
             pathField.setText(String.valueOf(path));
@@ -75,17 +81,28 @@ public class Controller implements Initializable {
         }
     }
 
-    public void pathUp(ActionEvent actionEvent) {
+    /**
+     * Переход на уровень выше в файловой системе
+     */
+    public void pathUp() {
         Path path = Paths.get(pathField.getText()).getParent();
         if (path != null) {
             updateList(path);
         }
     }
 
-    public void selectDisk(ActionEvent actionEvent) {
+
+    /**
+     * Выбор диска файловой системы
+     */
+    public void selectDisk() {
         updateList(Paths.get(disks.getValue()));
     }
 
+    /**
+     * Отправка файла на сервер
+     * @param actionEvent ActionEvent
+     */
     public void upload(ActionEvent actionEvent) {
         ((Stage) (((Button) actionEvent.getSource()).getScene().getWindow())).close();
         try {
@@ -116,13 +133,15 @@ public class Controller implements Initializable {
         }
     }
 
-    public void download(ActionEvent actionEvent) {
+    /**
+     * Получение файла с сервера
+     */
+    public void download() {
         Path path = client.Controller.getDownloadFile();
         if (!Files.isDirectory(path)) {
-            downloadFile = path;
             Client.getController().setDownloadPath(pathField.getText());
             client.Controller.getChannel()
-                    .writeAndFlush(Unpooled.wrappedBuffer(("Command:download " + downloadFile).getBytes(StandardCharsets.UTF_8)));
+                    .writeAndFlush(Unpooled.wrappedBuffer(("Command:download " + path).getBytes(StandardCharsets.UTF_8)));
         } else {
             Alert alert = new Alert(Alert.AlertType.ERROR, "It's a file!", ButtonType.OK);
             alert.showAndWait();

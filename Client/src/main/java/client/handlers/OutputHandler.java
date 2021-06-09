@@ -6,11 +6,16 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 
 public class OutputHandler extends ChannelOutboundHandlerAdapter {
-    private ByteBuf buf;
 
+    /**
+     * Обработчик исходящих сообщений
+     * @param ctx ChannelHandlerContext
+     * @param msg Object
+     * @param promise ChannelPromise
+     */
     @Override
-    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        buf = (ByteBuf) msg;
+    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+        ByteBuf buf = (ByteBuf) msg;
         StringBuilder out = new StringBuilder();
         char c;
         while (buf.isReadable()) {

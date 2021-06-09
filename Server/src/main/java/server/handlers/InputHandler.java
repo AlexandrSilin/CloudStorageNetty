@@ -38,6 +38,12 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         System.out.println("Client connected " + ctx.channel());
     }
 
+    /**
+     * Обработчик входящих сообщений
+     * @param ctx ChannelHandlerContext
+     * @param msg Object received message
+     * @throws SQLException
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws SQLException {
         buf = (ByteBuf) msg;
@@ -115,6 +121,10 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
+    /**
+     * Отправка списка файлов хранящихся в каталоге
+     * @param ctx ChannelHandlerContext
+     */
     private void showFiles(ChannelHandlerContext ctx) {
         try {
             List<FileInfo> fileInfoList = Files.list(path).map(FileInfo::new).collect(Collectors.toList());
@@ -135,6 +145,11 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
+    /**
+     * Отправка файла с сервера
+     * @param ctx ChannelHandlerContext
+     * @param s String path to file
+     */
     private void downloading(ChannelHandlerContext ctx, String s) {
         try {
             Path path = Path.of(s);
@@ -154,14 +169,13 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        Path path = Path.of(s);
-//        try {
-//            ctx.writeAndFlush(buf.clear().writeBytes(Files.readAllBytes(path)));
-//        } catch (IOException e) {
-//            ctx.writeAndFlush(buf.clear().writeBytes(e.getMessage().getBytes(StandardCharsets.UTF_8)));
-//        }
     }
 
+    /**
+     * Авторизация на сервере
+     * @param ctx ChannelHandlerContext
+     * @param data String[] user's data
+     */
     private void auth(ChannelHandlerContext ctx, String[] data) {
         if (data.length > 2) {
             ctx.writeAndFlush(buf.clear()
@@ -186,6 +200,12 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
+    /**
+     * Загрузка файлов на сервер
+     * @param ctx ChannelHandlerContext
+     * @param srcPath String filename
+     * @param buf ByteBuf file data
+     */
     private void uploading(ChannelHandlerContext ctx, String srcPath, ByteBuf buf) {
         try {
             String[] fileBytes = srcPath.split("%");
@@ -215,6 +235,11 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         super.exceptionCaught(ctx, cause);
     }
 
+    /**
+     * Удаление файлов на сервере
+     * @param filename String filename
+     * @param ctx ChannelHandlerContext
+     */
     private void removeFile(String filename, ChannelHandlerContext ctx) {
         File file = new File(String.valueOf(path), filename);
         if (Files.exists(file.toPath())) {
@@ -232,6 +257,11 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                 .writeBytes("Message: File doesn't exists%error".getBytes(StandardCharsets.UTF_8)));
     }
 
+    /**
+     * Переход в каталог
+     * @param dirname String catalog name
+     * @param ctx ChannelHandlerContext
+     */
     private void goToDirectory(String dirname, ChannelHandlerContext ctx) {
         if ("..".equals(dirname)) {
             if (path.equals(Path.of("root/" + nick))) {
@@ -249,6 +279,11 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         path = tmp;
     }
 
+    /**
+     * Создание каталога на сервере
+     * @param dirName String catalog name
+     * @param ctx ChannelHandlerContext
+     */
     private void createDirectory(String dirName, ChannelHandlerContext ctx) {
         if (!(dirName.trim().length() > 0 && dirName.matches("[a-zA-Z]*\\d*"))) {
             ctx.writeAndFlush(buf.clear()

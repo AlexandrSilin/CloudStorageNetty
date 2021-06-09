@@ -27,11 +27,11 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
     public static final String RM_COMMAND = "\trm [filename] delete file\n";
     public static final String NICKNAME_COMMAND = "\tnickname show your nickname\n";
     public static final String UPLOAD = "\tupload [path] [filename] upload your file in current directory on server\n";
-    private static String nick = "admin";
+    private static String nick = "";
     private static Path path = Path.of("root/" + nick);
     private Connection connection = null;
     private ByteBuf buf;
-    private boolean isAuth = true;
+    private boolean isAuth = false;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {

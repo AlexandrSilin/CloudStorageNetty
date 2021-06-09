@@ -31,7 +31,7 @@ import java.util.List;
 
 public class Controller {
     private static Channel channel = null;
-    private static String nick = "admin";
+    private static String nick = "";
     private static Path path = Path.of("root/" + nick);
     private static Path downloadPath;
     private static Path downloadFile;

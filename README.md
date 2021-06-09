@@ -12,14 +12,14 @@
 <li>Sort</li>
 </ul>
 
-<h2>Using technologies client</h2>
+<h2>Using technologies on client</h2>
 <ul>
 <li>JDK 11</li>
-<li>JAVAFX </li>
-<li>IO NETTY 4.1.10.Final</li>
+<li>JavaFX </li>
+<li>IO Netty 4.1.10.Final</li>
 </ul>
 
-<h2>Using tecchnologies server</h2>
+<h2>Using technologies on server</h2>
 <ul>
 <li>JDK 11</li>
 <li>Mysql 8.0.25</li>

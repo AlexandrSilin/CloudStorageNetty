@@ -73,7 +73,7 @@ public class Controller {
     TableColumn<FileOnServer, String> lastModified;
 
     private List<FileOnServer> fileOnServerList = new ArrayList<>();
-    private static String nick = "admin";
+    private static String nick = "";
     private static Path path = Path.of("root/" + nick);
     private boolean initTableCols;
 
@@ -93,16 +93,18 @@ public class Controller {
         Alert answer = new Alert(Alert.AlertType.INFORMATION, "Success", ButtonType.OK);
         String login = this.login.getText().trim();
         String password = this.password.getText().trim();
+        ((Stage) (((Button) actionEvent.getSource()).getScene().getWindow())).close();
         if (login.length() == 0) {
             answer.setContentText("The field 'Login' must be filled");
+            answer.showAndWait();
         } else if (password.length() == 0) {
             answer.setContentText("The field 'Password' must be filled");
+            answer.showAndWait();
         } else {
             channel.writeAndFlush(Unpooled.wrappedBuffer(("Command:auth " + login + " " + password)
                     .getBytes(StandardCharsets.UTF_8)));
             authButton.setDisable(true);
         }
-        answer.showAndWait();
     }
 
     public static void setNick(String nick) {
@@ -245,8 +247,24 @@ public class Controller {
         }
     }
 
-    private void forceRefreshTable(ActionEvent actionEvent){
-        synchronized (this){
+    public static void alert(String message, String type) {
+        Alert alert;
+        switch (type) {
+            case "error":
+                alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
+                break;
+            case "warning":
+                alert = new Alert(Alert.AlertType.WARNING, message, ButtonType.OK);
+                break;
+            default:
+                alert = new Alert(Alert.AlertType.INFORMATION, message, ButtonType.OK);
+        }
+        alert.setTitle("Message from server");
+        alert.showAndWait();
+    }
+
+    private void forceRefreshTable(ActionEvent actionEvent) {
+        synchronized (this) {
             try {
                 this.wait(200);
                 refreshList(actionEvent);

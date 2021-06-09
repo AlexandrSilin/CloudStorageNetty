@@ -17,7 +17,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,8 +31,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
     private static Path path = Path.of("root/" + nick);
     private Connection connection = null;
     private ByteBuf buf;
-    private boolean isAuth = true;
-    private List<FileInfo> fileInfoList = new ArrayList<>();
+    private boolean isAuth = false;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
@@ -55,21 +53,21 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
             switch (command[0]) {
                 case "--help":
                     buf.clear().writeBytes(("Message: \n" + LS_COMMAND + MKDIR_COMMAND + CD_COMMAND + RM_COMMAND +
-                            UPLOAD + NICKNAME_COMMAND).getBytes(StandardCharsets.UTF_8));
-                    ctx.channel().writeAndFlush(buf);
+                            UPLOAD + NICKNAME_COMMAND + "%info").getBytes(StandardCharsets.UTF_8));
+                    ctx.writeAndFlush(buf);
                     break;
                 case "upload":
                     if (command.length < 2) {
-                        ctx.channel().writeAndFlush(buf.clear()
-                                .writeBytes("Message: Bad command".getBytes(StandardCharsets.UTF_8)));
+                        ctx.writeAndFlush(buf.clear()
+                                .writeBytes("Message: Bad command%error".getBytes(StandardCharsets.UTF_8)));
                     } else {
                         uploading(ctx, command[1]);
                     }
                     break;
                 case "download":
                     if (command.length < 2) {
-                        ctx.channel().writeAndFlush(buf.clear()
-                                .writeBytes("Message: Bad command".getBytes(StandardCharsets.UTF_8)));
+                        ctx.writeAndFlush(buf.clear()
+                                .writeBytes("Message: Bad command%error".getBytes(StandardCharsets.UTF_8)));
                     } else {
                         downloading(ctx, command[1]);
                     }
@@ -85,23 +83,19 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                     break;
                 case "mkdir":
                     if (command.length < 2) {
-                        ctx.channel().writeAndFlush(buf.clear()
-                                .writeBytes("Message: Bad command".getBytes(StandardCharsets.UTF_8)));
+                        ctx.writeAndFlush(buf.clear()
+                                .writeBytes("Message: Bad command%error".getBytes(StandardCharsets.UTF_8)));
                         break;
                     }
                     createDirectory(command[1], ctx);
                     break;
                 case "rm":
                     if (command.length < 2) {
-                        ctx.channel().writeAndFlush(buf.clear()
-                                .writeBytes("Message: Bad command".getBytes(StandardCharsets.UTF_8)));
+                        ctx.writeAndFlush(buf.clear()
+                                .writeBytes("Message: Bad command%error".getBytes(StandardCharsets.UTF_8)));
                         break;
                     }
                     removeFile(command[1], ctx);
-                    break;
-                case "nickname":
-                    ctx.channel().writeAndFlush(buf.clear()
-                            .writeBytes(("Message: Your nickname is " + nick).getBytes(StandardCharsets.UTF_8)));
                     break;
                 case "exit":
                     ctx.channel().close();
@@ -111,25 +105,25 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                     break;
             }
         } else {
-            ctx.channel().writeAndFlush(buf.clear()
-                    .writeBytes("Message: please type auth [login] [password] for login".getBytes(StandardCharsets.UTF_8)));
+            ctx.writeAndFlush(buf.clear()
+                    .writeBytes("Message: please fulfill form auth [login] [password] for login%warning".getBytes(StandardCharsets.UTF_8)));
         }
     }
 
-    private void showFiles(ChannelHandlerContext ctx){
+    private void showFiles(ChannelHandlerContext ctx) {
         try {
-            fileInfoList = Files.list(path).map(FileInfo::new).collect(Collectors.toList());
-            if (fileInfoList.size() > 0){
+            List<FileInfo> fileInfoList = Files.list(path).map(FileInfo::new).collect(Collectors.toList());
+            if (fileInfoList.size() > 0) {
                 StringBuilder fileInfo = new StringBuilder();
                 fileInfo.append("List:");
                 for (FileInfo info : fileInfoList) {
-                    fileInfo.append(info.getFilename() + " " +
-                            info.getType() + " " +
-                            info.getLastModified() + "%");
+                    fileInfo.append(info.getFilename()).append(" ")
+                            .append(info.getType()).append(" ")
+                            .append(info.getLastModified()).append("%");
                 }
-                ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(fileInfo.toString().getBytes(StandardCharsets.UTF_8)));
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(fileInfo.toString().getBytes(StandardCharsets.UTF_8)));
             } else {
-                ctx.channel().writeAndFlush(buf.clear().writeBytes("List:!!".getBytes(StandardCharsets.UTF_8)));
+                ctx.writeAndFlush(buf.clear().writeBytes("List:!!".getBytes(StandardCharsets.UTF_8)));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -147,8 +141,8 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
 
     private void auth(ChannelHandlerContext ctx, String[] data) {
         if (data.length > 2) {
-            ctx.channel().writeAndFlush(buf.clear()
-                    .writeBytes("Message: Bad command".getBytes(StandardCharsets.UTF_8)));
+            ctx.writeAndFlush(buf.clear()
+                    .writeBytes("Message: Bad command%error".getBytes(StandardCharsets.UTF_8)));
         } else {
             try {
                 connection = Connect.getConnection();
@@ -158,23 +152,20 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                 if (set.next()) {
                     nick = data[0];
                     isAuth = true;
-                    ctx.channel().writeAndFlush(buf.clear()
-                            .writeBytes(("Message: Auth complete. Your nickname is " + nick)
-                                    .getBytes(StandardCharsets.UTF_8)));
-                    ctx.channel().writeAndFlush(buf.clear()
-                            .writeBytes(("Nick:" + nick).getBytes(StandardCharsets.UTF_8)));
+                    ctx.writeAndFlush(buf.clear()
+                            .writeBytes(("nick:" + nick).getBytes(StandardCharsets.UTF_8)));
+                    path = Path.of("root/" + nick);
                 }
             } catch (SQLException | ClassNotFoundException e) {
-                ctx.channel().writeAndFlush(buf.clear()
-                        .writeBytes(("Message: " + e.getMessage()).getBytes(StandardCharsets.UTF_8)));
+                ctx.writeAndFlush(buf.clear()
+                        .writeBytes(("Message: " + e.getMessage() + "%error").getBytes(StandardCharsets.UTF_8)));
             }
         }
     }
 
-    private void uploading(ChannelHandlerContext ctx, String srcPath) {
+    private void uploading(ChannelHandlerContext ctx, String src) {
         try {
-            String[] fileBytes = srcPath.split("%");
-            Path path = Path.of(InputHandler.path + "/" + fileBytes[0]);
+            Path path = Path.of(InputHandler.path + "/");
             long offset = 0;
             File f = new File(String.valueOf(path));
             if (!Files.exists(path)) {
@@ -184,7 +175,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
             }
             RandomAccessFile file = new RandomAccessFile(f, "rw");
             file.seek(offset);
-            file.writeBytes(fileBytes[1]);
+            file.writeBytes(src);
             ctx.writeAndFlush(file);
         } catch (
                 IOException e) {
@@ -208,15 +199,15 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
             try {
                 Files.delete(file.toPath());
             } catch (IOException e) {
-                ctx.channel().writeAndFlush(buf.clear()
-                        .writeBytes(("Message: " + e.getMessage()).getBytes(StandardCharsets.UTF_8)));
+                ctx.writeAndFlush(buf.clear()
+                        .writeBytes(("Message: " + e.getMessage() + "%error").getBytes(StandardCharsets.UTF_8)));
             }
-            ctx.channel().writeAndFlush(buf.clear()
-                    .writeBytes("Message: Success".getBytes(StandardCharsets.UTF_8)));
+            ctx.writeAndFlush(buf.clear()
+                    .writeBytes("Message: Success%info".getBytes(StandardCharsets.UTF_8)));
             return;
         }
-        ctx.channel().writeAndFlush(buf.clear()
-                .writeBytes("Message: File doesn't exists".getBytes(StandardCharsets.UTF_8)));
+        ctx.writeAndFlush(buf.clear()
+                .writeBytes("Message: File doesn't exists%error".getBytes(StandardCharsets.UTF_8)));
     }
 
     private void goToDirectory(String dirname, ChannelHandlerContext ctx) {
@@ -229,8 +220,8 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         }
         Path tmp = Path.of(String.valueOf(path), dirname);
         if (!Files.isDirectory(tmp)) {
-            ctx.channel().writeAndFlush(buf.clear()
-                    .writeBytes("Message: Directory doesn't exists".getBytes(StandardCharsets.UTF_8)));
+            ctx.writeAndFlush(buf.clear()
+                    .writeBytes("Message: Directory doesn't exists%error".getBytes(StandardCharsets.UTF_8)));
             return;
         }
         path = tmp;
@@ -238,22 +229,22 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
 
     private void createDirectory(String dirName, ChannelHandlerContext ctx) {
         if (!(dirName.trim().length() > 0 && dirName.matches("[a-zA-Z]*\\d*"))) {
-            ctx.channel().writeAndFlush(buf.clear()
-                    .writeBytes("Message: Bad directory name".getBytes(StandardCharsets.UTF_8)));
+            ctx.writeAndFlush(buf.clear()
+                    .writeBytes("Message: Bad directory name%info".getBytes(StandardCharsets.UTF_8)));
             return;
         }
         if (Files.isDirectory(Path.of(String.valueOf(path), dirName))) {
-            ctx.channel().writeAndFlush(buf.clear()
-                    .writeBytes("Message: Directory exists".getBytes(StandardCharsets.UTF_8)));
+            ctx.writeAndFlush(buf.clear()
+                    .writeBytes("Message: Directory exists%error".getBytes(StandardCharsets.UTF_8)));
             return;
         }
         try {
             Files.createDirectory(Path.of(String.valueOf(path), dirName));
         } catch (IOException e) {
-            ctx.channel().writeAndFlush(buf.clear()
-                    .writeBytes(("Message: " + e.getMessage()).getBytes(StandardCharsets.UTF_8)));
+            ctx.writeAndFlush(buf.clear()
+                    .writeBytes(("Message: " + e.getMessage() + "%error").getBytes(StandardCharsets.UTF_8)));
         }
-        ctx.channel().writeAndFlush(buf.clear()
-                .writeBytes("Message: Success".getBytes(StandardCharsets.UTF_8)));
+        ctx.writeAndFlush(buf.clear()
+                .writeBytes("Message: Success%info".getBytes(StandardCharsets.UTF_8)));
     }
 }

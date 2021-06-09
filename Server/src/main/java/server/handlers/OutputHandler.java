@@ -20,12 +20,7 @@ public class OutputHandler extends ChannelOutboundHandlerAdapter {
                 break;
             }
         }
-        if (out.toString().startsWith("Message: ")) {
-            buf.clear().writeBytes(out.append('\n').toString().getBytes(StandardCharsets.UTF_8));
-            ctx.writeAndFlush(buf);
-        } else if (out.toString().startsWith("List:")) {
-            out = new StringBuilder();
-            out.append("List:");
+            if (out.toString().startsWith("File:")) {
             while (buf.isReadable()) {
                 out.append((char) buf.readByte());
             }

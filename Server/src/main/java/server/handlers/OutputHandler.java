@@ -20,7 +20,7 @@ public class OutputHandler extends ChannelOutboundHandlerAdapter {
                 break;
             }
         }
-            if (out.toString().startsWith("File:")) {
+        if (out.toString().startsWith("File:")) {
             while (buf.isReadable()) {
                 out.append((char) buf.readByte());
             }

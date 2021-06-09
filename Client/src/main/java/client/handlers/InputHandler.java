@@ -6,6 +6,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 public class InputHandler extends ChannelInboundHandlerAdapter {
     private static Controller controller;
     private ByteBuf buf;
@@ -53,6 +59,30 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                             controller.addItemsToList(new String[0]);
                         }
                     }
+                }
+                break;
+            case "File:":
+                try {
+                    StringBuilder filename = new StringBuilder();
+                    while (buf.isReadable()) {
+                        c = (char) buf.readByte();
+                        if (c == '%') {
+                            break;
+                        }
+                        filename.append(c);
+                    }
+                    Path path = Path.of(client.Controller.getDownloadPath() + "/" + filename);
+                    File f = new File(String.valueOf(path));
+                    if (!Files.exists(path)) {
+                        Files.createFile(path);
+                    }
+                    RandomAccessFile file = new RandomAccessFile(f, "rw");
+                    while (buf.isReadable()) {
+                        file.write(buf.readByte());
+                    }
+                    ctx.writeAndFlush(file);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
                 break;
         }

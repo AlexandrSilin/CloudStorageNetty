@@ -31,7 +31,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
     private static Path path = Path.of("root/" + nick);
     private Connection connection = null;
     private ByteBuf buf;
-    private boolean isAuth = false;
+    private boolean isAuth = true;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
@@ -42,8 +42,13 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws SQLException {
         buf = (ByteBuf) msg;
         StringBuilder builder = new StringBuilder();
+        char c;
         while (buf.isReadable()) {
-            builder.append((char) buf.readByte());
+            c = (char) buf.readByte();
+            if (c == '%') {
+                break;
+            }
+            builder.append(c);
         }
         String[] command = builder.toString().trim().split(" ", 2);
         if (command[0].equals("auth")) {
@@ -61,7 +66,7 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                         ctx.writeAndFlush(buf.clear()
                                 .writeBytes("Message: Bad command%error".getBytes(StandardCharsets.UTF_8)));
                     } else {
-                        uploading(ctx, command[1]);
+                        uploading(ctx, command[1], buf);
                     }
                     break;
                 case "download":
@@ -131,12 +136,30 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void downloading(ChannelHandlerContext ctx, String s) {
-        Path path = Path.of(s);
         try {
-            ctx.channel().writeAndFlush(buf.clear().writeBytes(Files.readAllBytes(path)));
+            Path path = Path.of(s);
+            File file = new File(String.valueOf(path));
+            RandomAccessFile src = new RandomAccessFile(file, "r");
+            String command = "File:" + file.getName() + "%"; //? %
+            if (file.length() < Integer.MAX_VALUE) {
+                byte[] fileBytes = new byte[(int) file.length()];
+                src.readFully(fileBytes);
+                byte[] bufCommand = new byte[command.length()];
+                for (int j = 0; j < command.length(); j++) {
+                    bufCommand[j] = (byte) command.charAt(j);
+                }
+                ByteBuf buf = Unpooled.copiedBuffer(bufCommand, fileBytes);
+                ctx.writeAndFlush(buf);
+            }
         } catch (IOException e) {
-            ctx.channel().writeAndFlush(buf.clear().writeBytes(e.getMessage().getBytes(StandardCharsets.UTF_8)));
+            e.printStackTrace();
         }
+//        Path path = Path.of(s);
+//        try {
+//            ctx.writeAndFlush(buf.clear().writeBytes(Files.readAllBytes(path)));
+//        } catch (IOException e) {
+//            ctx.writeAndFlush(buf.clear().writeBytes(e.getMessage().getBytes(StandardCharsets.UTF_8)));
+//        }
     }
 
     private void auth(ChannelHandlerContext ctx, String[] data) {
@@ -163,19 +186,18 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    private void uploading(ChannelHandlerContext ctx, String src) {
+    private void uploading(ChannelHandlerContext ctx, String srcPath, ByteBuf buf) {
         try {
-            Path path = Path.of(InputHandler.path + "/");
-            long offset = 0;
+            String[] fileBytes = srcPath.split("%");
+            Path path = Path.of(InputHandler.path + "/" + fileBytes[0]);
             File f = new File(String.valueOf(path));
             if (!Files.exists(path)) {
                 Files.createFile(path);
-            } else {
-                offset = f.length();
             }
             RandomAccessFile file = new RandomAccessFile(f, "rw");
-            file.seek(offset);
-            file.writeBytes(src);
+            while (buf.isReadable()) {
+                file.write(buf.readByte());
+            }
             ctx.writeAndFlush(file);
         } catch (
                 IOException e) {

@@ -35,7 +35,12 @@
                 <Insets bottom="5.0" top="5.0"/>
             </HBox.margin>
         </Button>
-        <Button onAction="#openExplorer" text="Open explorer">
+        <Button onAction="#upload" text="Upload">
+            <HBox.margin>
+                <Insets top="5.0"/>
+            </HBox.margin>
+        </Button>
+        <Button onAction="#download" text="Download">
             <HBox.margin>
                 <Insets top="5.0"/>
             </HBox.margin>

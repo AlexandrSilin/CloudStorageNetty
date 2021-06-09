@@ -1,5 +1,6 @@
 package client.explorer;
 
+import client.Client;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import javafx.beans.property.SimpleStringProperty;
@@ -9,7 +10,9 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
@@ -21,7 +24,7 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class Controller implements Initializable {
-    private static Path downloadPath = null;
+    private static Path downloadFile = null;
 
     @FXML
     TableView<FileInfo> table;
@@ -85,15 +88,41 @@ public class Controller implements Initializable {
 
     public void upload(ActionEvent actionEvent) {
         ((Stage) (((Button) actionEvent.getSource()).getScene().getWindow())).close();
-        Path path = Path.of(pathField.getText()).resolve(table.getSelectionModel().getSelectedItem().getFilename());
-        String toSend = path + "%";
-        client.Controller.getChannel().writeAndFlush(Unpooled.wrappedBuffer(toSend.getBytes(StandardCharsets.UTF_8)));
+        try {
+            Path path = Path.of(pathField.getText()).resolve(table.getSelectionModel().getSelectedItem().getFilename());
+            if (!Files.isDirectory(path)) {
+                File file = new File(String.valueOf(path));
+                RandomAccessFile src = new RandomAccessFile(file, "r");
+                String command = "File:upload " + file.getName() + "%";
+                if (file.length() > Integer.MAX_VALUE) {
+                    byte[] fileBytes = new byte[(int) file.length()];
+                    src.readFully(fileBytes);
+                    byte[] bufCommand = new byte[command.length()];
+                    for (int j = 0; j < command.length(); j++) {
+                        bufCommand[j] = (byte) command.charAt(j);
+                    }
+                    ByteBuf buf = Unpooled.copiedBuffer(bufCommand, fileBytes);
+                    client.Controller.getChannel().writeAndFlush(buf);
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Too big file", ButtonType.OK);
+                    alert.showAndWait();
+                }
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR, "It's a directory!", ButtonType.OK);
+                alert.showAndWait();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void download(ActionEvent actionEvent) {
-        Path path = Path.of(pathField.getText()).resolve(table.getSelectionModel().getSelectedItem().getFilename());
-        if (Files.isDirectory(path)) {
-            downloadPath = path;
+        Path path = client.Controller.getDownloadFile();
+        if (!Files.isDirectory(path)) {
+            downloadFile = path;
+            Client.getController().setDownloadPath(pathField.getText());
+            client.Controller.getChannel()
+                    .writeAndFlush(Unpooled.wrappedBuffer(("Command:download " + downloadFile).getBytes(StandardCharsets.UTF_8)));
         } else {
             Alert alert = new Alert(Alert.AlertType.ERROR, "It's a file!", ButtonType.OK);
             alert.showAndWait();

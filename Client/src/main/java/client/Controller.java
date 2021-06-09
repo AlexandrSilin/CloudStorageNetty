@@ -31,54 +31,75 @@ import java.util.List;
 
 public class Controller {
     private static Channel channel = null;
-
+    private static String nick = "admin";
+    private static Path path = Path.of("root/" + nick);
+    private static Path downloadPath;
+    private static Path downloadFile;
     Stage connectWindow;
     Stage authWindow;
     Stage dialog;
-
     @FXML
     TextField currentPath;
-
     @FXML
     TextField login;
-
     @FXML
     PasswordField password;
-
     @FXML
     Button authButton;
-
     @FXML
     TextField folderName;
-
     @FXML
     TableView<FileOnServer> filesTable;
-
     @FXML
     TextField ip;
-
     @FXML
     TextField port;
-
     @FXML
     Button connectButton;
-
     @FXML
     TableColumn<FileOnServer, String> fileType;
-
     @FXML
     TableColumn<FileOnServer, String> fileName;
-
     @FXML
     TableColumn<FileOnServer, String> lastModified;
-
     private List<FileOnServer> fileOnServerList = new ArrayList<>();
-    private static String nick = "";
-    private static Path path = Path.of("root/" + nick);
     private boolean initTableCols;
 
     public static Channel getChannel() {
         return channel;
+    }
+
+    public static void setNick(String nick) {
+        Controller.nick = nick;
+        path = Path.of("root/" + nick);
+    }
+
+    public static void alert(String message, String type) {
+        Alert alert;
+        switch (type) {
+            case "error":
+                alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
+                break;
+            case "warning":
+                alert = new Alert(Alert.AlertType.WARNING, message, ButtonType.OK);
+                break;
+            default:
+                alert = new Alert(Alert.AlertType.INFORMATION, message, ButtonType.OK);
+        }
+        alert.setTitle("Message from server");
+        alert.showAndWait();
+    }
+
+    public static Path getDownloadFile() {
+        return downloadFile;
+    }
+
+    public static Path getDownloadPath() {
+        return downloadPath;
+    }
+
+    public void setDownloadPath(String path) {
+        downloadPath = Path.of(path);
     }
 
     public void auth() throws IOException {
@@ -105,11 +126,6 @@ public class Controller {
                     .getBytes(StandardCharsets.UTF_8)));
             authButton.setDisable(true);
         }
-    }
-
-    public static void setNick(String nick) {
-        Controller.nick = nick;
-        path = Path.of("root/" + nick);
     }
 
     public void exit(ActionEvent actionEvent) {
@@ -161,8 +177,27 @@ public class Controller {
         connectWindow.show();
     }
 
-    public void openExplorer(ActionEvent actionEvent) throws IOException {
+    public void upload(ActionEvent actionEvent) throws IOException {
         new Explorer();
+    }
+
+    public void download(ActionEvent actionEvent) throws IOException {
+        if (filesTable.getSelectionModel().getSelectedItem() != null) {
+            String filename = filesTable.getSelectionModel().getSelectedItem().getFilename();
+            downloadPath = Path.of(currentPath.getText());
+            downloadFile = Path.of(downloadPath + "/" + filename);
+            if (Files.isDirectory(downloadFile)) {
+                Alert alert = new Alert(Alert.AlertType.WARNING, "It's a directory", ButtonType.OK);
+                alert.setTitle("Warning");
+                alert.showAndWait();
+            } else {
+                new Explorer();
+            }
+        } else {
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Choose file before", ButtonType.OK);
+            alert.setTitle("Warning");
+            alert.showAndWait();
+        }
     }
 
     public void help(ActionEvent actionEvent) {
@@ -247,20 +282,8 @@ public class Controller {
         }
     }
 
-    public static void alert(String message, String type) {
-        Alert alert;
-        switch (type) {
-            case "error":
-                alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
-                break;
-            case "warning":
-                alert = new Alert(Alert.AlertType.WARNING, message, ButtonType.OK);
-                break;
-            default:
-                alert = new Alert(Alert.AlertType.INFORMATION, message, ButtonType.OK);
-        }
-        alert.setTitle("Message from server");
-        alert.showAndWait();
+    public String getCurrentPath() {
+        return currentPath.getText();
     }
 
     private void forceRefreshTable(ActionEvent actionEvent) {

@@ -59,6 +59,8 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         String[] command = builder.toString().trim().split(" ", 2);
         if (command[0].equals("auth")) {
             auth(ctx, command[1].split(" "));
+        } else if (command[0].equals("register")) {
+            registration(ctx, command[1]);
         }
         if (isAuth) {
             switch (command[0]) {
@@ -119,6 +121,22 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
         } else {
             ctx.writeAndFlush(buf.clear()
                     .writeBytes("Message: please fulfill form auth [login] [password] for login%warning".getBytes(StandardCharsets.UTF_8)));
+        }
+    }
+
+    private void registration(ChannelHandlerContext ctx, String userData) {
+        String[] data = userData.trim().split(" ");
+        try {
+            connection = Connect.getConnection();
+            Statement statement = connection.createStatement();
+            int res = statement.executeUpdate("insert cloud.users (login, password) values('" + data[0] +
+                    "','" + data[1] + "')");
+            if (res == 1) {
+                ctx.writeAndFlush("Message: Success");
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            ctx.writeAndFlush(buf.clear()
+                    .writeBytes(("Message: " + e.getMessage() + "%error").getBytes(StandardCharsets.UTF_8)));
         }
     }
 
@@ -193,8 +211,9 @@ public class InputHandler extends ChannelInboundHandlerAdapter {
                     ctx.writeAndFlush(buf.clear()
                             .writeBytes(("nick:" + nick).getBytes(StandardCharsets.UTF_8)));
                     path = Path.of("root/" + nick);
+                    Files.createDirectories(path);
                 }
-            } catch (SQLException | ClassNotFoundException e) {
+            } catch (SQLException | ClassNotFoundException | IOException e) {
                 ctx.writeAndFlush(buf.clear()
                         .writeBytes(("Message: " + e.getMessage() + "%error").getBytes(StandardCharsets.UTF_8)));
             }

@@ -35,6 +35,11 @@
                 <Insets bottom="5.0" top="5.0"/>
             </HBox.margin>
         </Button>
+        <Button onAction="#register" text="Register">
+            <HBox.margin>
+                <Insets bottom="5.0" top="5.0"/>
+            </HBox.margin>
+        </Button>
         <Button onAction="#upload" text="Upload">
             <HBox.margin>
                 <Insets top="5.0"/>

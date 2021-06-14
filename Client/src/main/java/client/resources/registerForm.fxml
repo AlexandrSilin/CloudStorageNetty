@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox prefHeight="114.0" prefWidth="324.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.Controller">
+    <TextField fx:id="regLogin" promptText="Login">
+        <VBox.margin>
+            <Insets left="5.0" right="5.0" top="10.0" />
+        </VBox.margin>
+    </TextField>
+    <TextField fx:id="regPass" promptText="Password">
+        <opaqueInsets>
+            <Insets />
+        </opaqueInsets>
+        <VBox.margin>
+            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+        </VBox.margin>
+    </TextField>
+    <Button cancelButton="true" mnemonicParsing="false" onAction="#submitReg" text="Submit">
+        <VBox.margin>
+            <Insets bottom="5.0" left="5.0" />
+        </VBox.margin>
+    </Button>
+</VBox>

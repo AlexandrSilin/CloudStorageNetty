@@ -46,6 +46,8 @@ public class OutputHandler extends ChannelOutboundHandlerAdapter {
                 String[] alert = out.toString().split("%");
                 ctx.flush();
                 Controller.alert(alert[0], alert[1]);
+            case "register:":
+                ctx.writeAndFlush(buf);
         }
     }
 }

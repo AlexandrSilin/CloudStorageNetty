@@ -56,6 +56,10 @@ public class Controller {
     private TableColumn<FileOnServer, String> fileName;
     @FXML
     private TableColumn<FileOnServer, String> lastModified;
+    @FXML
+    private TextField regPass;
+    @FXML
+    private TextField regLogin;
 
     private final List<FileOnServer> fileOnServerList = new ArrayList<>();
     private boolean initTableCols;
@@ -71,8 +75,9 @@ public class Controller {
 
     /**
      * Вывод сообщения
+     *
      * @param message String message
-     * @param type String type of alert
+     * @param type    String type of alert
      */
     public static void alert(String message, String type) {
         Alert alert;
@@ -104,6 +109,7 @@ public class Controller {
 
     /**
      * Отрисовка окна авторизации
+     *
      * @throws IOException
      */
     public void auth() throws IOException {
@@ -116,6 +122,7 @@ public class Controller {
 
     /**
      * Авторизация на сервере
+     *
      * @param actionEvent ActionEvent
      */
     public void submitAuth(ActionEvent actionEvent) {
@@ -147,6 +154,7 @@ public class Controller {
 
     /**
      * Подключение к серверу
+     *
      * @param actionEvent ActionEvent
      */
     @FXML
@@ -184,6 +192,7 @@ public class Controller {
 
     /**
      * Отрисовка формы для подключения
+     *
      * @throws IOException
      */
     public void connect() throws IOException {
@@ -197,6 +206,7 @@ public class Controller {
 
     /**
      * Отрисовка формы для работы с файловым менеджером
+     *
      * @throws IOException
      */
     public void upload() throws IOException {
@@ -205,6 +215,7 @@ public class Controller {
 
     /**
      * Загрузка файлов с сервера
+     *
      * @throws IOException
      */
     public void download() throws IOException {
@@ -233,6 +244,7 @@ public class Controller {
 
     /**
      * Обновление файлов в таблице содержащей список файлов хранящихся на сервере
+     *
      * @param actionEvent ActionEvent
      */
     public void refreshList(ActionEvent actionEvent) {
@@ -268,6 +280,7 @@ public class Controller {
 
     /**
      * Пополнение таблицы для отображения файлов
+     *
      * @param items String[] item
      */
     public void addItemsToList(String[] items) {
@@ -280,6 +293,7 @@ public class Controller {
 
     /**
      * Переход на уровень выше в файловом менеджере сервера
+     *
      * @param actionEvent ActionEvent
      */
     public void up(ActionEvent actionEvent) {
@@ -293,8 +307,9 @@ public class Controller {
 
     /**
      * Переход в папку в файловом менеджере сервера
+     *
      * @param actionEvent ActionEvent
-     * @param catalog String to catalog
+     * @param catalog     String to catalog
      * @throws InterruptedException
      */
     public void goToDirectory(ActionEvent actionEvent, String catalog) throws InterruptedException {
@@ -305,6 +320,7 @@ public class Controller {
 
     /**
      * Отрисовка окна для создания папки на стороне сервера
+     *
      * @throws IOException
      */
     public void createFolder() throws IOException {
@@ -318,6 +334,7 @@ public class Controller {
 
     /**
      * Создание папки на стороне сервера
+     *
      * @param actionEvent ActionEvent
      */
     public void submitCreateFolder(ActionEvent actionEvent) {
@@ -329,6 +346,7 @@ public class Controller {
 
     /**
      * Удаление файла на сервере
+     *
      * @param actionEvent ActionEvent
      */
     public void deleteFile(ActionEvent actionEvent) {
@@ -341,6 +359,7 @@ public class Controller {
 
     /**
      * Обновление файлового менеджера
+     *
      * @param actionEvent ActionEvent
      */
     public void forceRefreshTable(ActionEvent actionEvent) {
@@ -352,5 +371,29 @@ public class Controller {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void register() throws IOException {
+        Stage reg = new Stage();
+        reg.setTitle("Registration");
+        FXMLLoader loader = new FXMLLoader(new File("Client/src/main/java/client/resources/registerForm.fxml").toURI().toURL());
+        Parent auth = loader.load();
+        reg.setScene(new Scene(auth));
+        reg.show();
+    }
+
+    public void submitReg(ActionEvent actionEvent) {
+        String login = regLogin.getText();
+        String password = regPass.getText();
+        if (login.trim().length() == 0) {
+            Alert alert = new Alert(Alert.AlertType.WARNING, "'Login' field can't be empty");
+            alert.showAndWait();
+        } else if (password.trim().length() == 0) {
+            Alert alert = new Alert(Alert.AlertType.WARNING, "'Password' field can't be empty");
+            alert.showAndWait();
+        } else {
+            channel.writeAndFlush(Unpooled.copiedBuffer(("register:register " + login + " " + password).getBytes()));
+        }
+        ((Stage) (((Button) actionEvent.getSource()).getScene().getWindow())).close();
     }
 }

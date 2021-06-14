@@ -2,6 +2,7 @@
 
 <h2>Functions:</h2>
 <ul>
+<li>Registration</li>
 <li>Authenticate</li>
 <li>DB</li>
 <li>Remove file</li>
